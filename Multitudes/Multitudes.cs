@@ -48,7 +48,7 @@ namespace Multitudes
         }
 
         // Random example command to set multiplier with
-        [ConCommand(commandName = "mod_wb_get_multiplier", flags = ConVarFlags.None, helpText = "Lets you know how what Multitudes' multiplier is set to.")]
+        [ConCommand(commandName = "mod_wb_get_multiplier", flags = ConVarFlags.None, helpText = "Lets you know what Multitudes' multiplier is set to.")]
         private static void CCGetMultiplier(ConCommandArgs args)
         {
             Debug.Log($"Your multiplier is currently {Multiplier}. Good luck!");
