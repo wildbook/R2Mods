@@ -14,5 +14,16 @@ To set a custom multiplier, use `mod_wb_set_multiplier X` in the ingame console.
 Setting a very high multiplier will make the game choke for a few minutes before you get ingame. Highest tested so far was 2 players and x250, effectively scaling as 500 players. It took around 5 minutes to generate a map, and once we were in there was both loot and enemies *everywhere*.
 
 ----
+**Changenotes**
+
+v1.0.1
+
+  - Fix typos in command description and README.md
+
+v1.0.0
+
+  - Initial release
+
+----
 
 Credit for this mod's name and icon goes entirely to [Sipondo](https://thunderstore.io/package/Sipondo/), check out their mods as well.
