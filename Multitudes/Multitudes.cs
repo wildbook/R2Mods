@@ -56,6 +56,8 @@ namespace Multitudes
                 c.GotoNext(x => x.MatchCallvirt<Run>("set_participatingPlayerCount"));
                 c.EmitDelegate<Func<int, int>>(x => x * Multiplier);
             };
+
+            On.RoR2.TeleporterInteraction.GetPlayerCountInRadius += (orig, self) => orig(self) * Multiplier;
         }
 
         // Random example command to set multiplier with

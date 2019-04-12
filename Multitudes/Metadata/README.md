@@ -16,6 +16,10 @@ Setting a very high multiplier will make the game choke for a few minutes before
 ----
 **Changenotes**
 
+v1.2.0
+
+  - Fix teleporter charge requiring far more time than intended
+
 v1.1.0
 
   - Fix compatibility with other mods adding console commands (more specifically [RoR2Cheats](https://thunderstore.io/package/Morris1927/RoR2Cheats/))
