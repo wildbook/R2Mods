@@ -1,15 +1,38 @@
 ﻿using System;
+using System.Collections;
 using System.Linq;
 using System.Reflection;
 using BepInEx;
-using Mono.Cecil.Cil;
 using MonoMod.Cil;
-using MonoMod.Utils;
 using RoR2;
 using UnityEngine;
 
 namespace Multitudes
 {
+    public class CommandHelper
+    {
+        public static void RegisterCommands(RoR2.Console self)
+        {
+            var types = typeof(CommandHelper).Assembly.GetTypes();
+            var catalog = self.GetFieldValue<IDictionary>("concommandCatalog");
+
+            foreach (var methodInfo in types.SelectMany(x => x.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)))
+            {
+                var customAttributes = methodInfo.GetCustomAttributes(false);
+                foreach (var attribute in customAttributes.OfType<ConCommandAttribute>())
+                {
+                    var conCommand = Reflection.GetNestedType<RoR2.Console>("ConCommand").Instantiate();
+
+                    conCommand.SetFieldValue("flags", attribute.flags);
+                    conCommand.SetFieldValue("helpText", attribute.helpText);
+                    conCommand.SetFieldValue("action", (RoR2.Console.ConCommandDelegate)Delegate.CreateDelegate(typeof(RoR2.Console.ConCommandDelegate), methodInfo));
+
+                    catalog[attribute.commandName.ToLower()] = conCommand;
+                }
+            }
+        }
+    }
+
     [BepInDependency("com.bepis.r2api")]
     [BepInPlugin("dev.wildbook.multitudes", "Multitudes", "1.0")]
     public class Multitudes : BaseUnityPlugin
@@ -18,12 +41,10 @@ namespace Multitudes
 
         public void Awake()
         {
-            // Needed to register our commands as well when the game registers its own
-            IL.RoR2.Console.Awake += il =>
+            On.RoR2.Console.Awake += (orig, self) =>
             {
-                var c = new ILCursor(il);
-                c.GotoNext(x => x.MatchStloc(1));
-                c.EmitDelegate<Func<Type[], Type[]>>(orig => orig.Concat(GetType().Assembly.GetTypes()).ToArray());
+                CommandHelper.RegisterCommands(self);
+                orig(self);
             };
 
             IL.RoR2.Run.FixedUpdate += il =>
