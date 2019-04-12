@@ -1,0 +1,9 @@
+{
+  "name": "Multitudes",
+  "version_number": "1.0.0",
+  "website_url": "https://github.com/wildbook/R2Mods/tree/master/Multitudes",
+  "description": "Ever wanted to scale the game as if you had more friends?",
+  "dependencies": [
+    "bbepis-BepInExPack-1.3.1"
+  ]
+}
