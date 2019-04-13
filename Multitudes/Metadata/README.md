@@ -11,10 +11,16 @@ It consists of like three lines of code, and all you need to know is that it mos
 To set a custom multiplier, use `mod_wb_set_multiplier X` in the ingame console.  
 `mod_wb_set_multiplier 4` is default and makes the game scale loot and enemies as if you were playing with four times as many players as you are.
 
-Setting a very high multiplier will make the game choke for a few minutes before you get ingame. Highest tested so far was 2 players and x250, effectively scaling as 500 players. It took around 5 minutes to generate a map, and once we were in there was both loot and enemies *everywhere*.
+Setting a very high multiplier will make the game choke for a few minutes before you get ingame. Highest tested so far was 2 players and x250, effectively scaling as 500 players. It took around 5 minutes to generate a map, and once we were in there was loot *everywhere*.  
+Enemies stop spawning at around 140 effective players, meaning 1x150, 3x50, and so on.
 
 ----
 **Changenotes**
+
+v1.2.1
+
+  - Add a notification on mod_wb_**g**et_multiplier if used with an argument, will hopefully prevent players from using get instead of set by mistake
+  - Added a BepInEx badge to the icon
 
 v1.2.0
 

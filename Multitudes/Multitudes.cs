@@ -34,7 +34,7 @@ namespace Multitudes
     }
 
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("dev.wildbook.multitudes", "Multitudes", "1.2.0")]
+    [BepInPlugin("dev.wildbook.multitudes", "Multitudes", "1.2.1")]
     public class Multitudes : BaseUnityPlugin
     {
         public static int Multiplier = 4;
@@ -74,7 +74,9 @@ namespace Multitudes
         [ConCommand(commandName = "mod_wb_get_multiplier", flags = ConVarFlags.None, helpText = "Lets you know what Multitudes' multiplier is set to.")]
         private static void CCGetMultiplier(ConCommandArgs args)
         {
-            Debug.Log($"Your multiplier is currently {Multiplier}. Good luck!");
+            Debug.Log(args.Count != 0
+                ? "Invalid arguments. Did you mean mod_wb_set_multiplier?"
+                : $"Your multiplier is currently {Multiplier}. Good luck!");
         }
     }
 }
