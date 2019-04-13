@@ -1,0 +1,9 @@
+{
+  "name": "TooManyFriends",
+  "version_number": "1.0.0",
+  "website_url": "https://github.com/wildbook/R2Mods/tree/master/TooManyFriends",
+  "description": "Ever felt like 4 players wasn't enough?",
+  "dependencies": [
+    "bbepis-BepInExPack-1.3.1"
+  ]
+}

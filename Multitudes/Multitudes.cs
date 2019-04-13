@@ -34,7 +34,7 @@ namespace Multitudes
     }
 
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("dev.wildbook.multitudes", "Multitudes", "1.0")]
+    [BepInPlugin("dev.wildbook.multitudes", "Multitudes", "1.2.0")]
     public class Multitudes : BaseUnityPlugin
     {
         public static int Multiplier = 4;
