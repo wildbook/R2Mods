@@ -1,6 +1,5 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
-using Multitudes;
 using RoR2;
 
 namespace TooManyFriends

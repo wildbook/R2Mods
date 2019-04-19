@@ -17,6 +17,15 @@ Enemies stop spawning at around 140 effective players, meaning 1x150, 3x50, and 
 ----
 **Changenotes**
 
+v1.3.1
+
+  - Restructured project a bit
+  - [NOT PUBLISHED YET DUE TO NO NOTICABLE CHANGES]
+
+v1.3.0
+
+  - Now supports configuration, meaning it'll remember the multiplier you set between game restarts
+
 v1.2.1
 
   - Add a notification on mod_wb_**g**et_multiplier if used with an argument, will hopefully prevent players from using get instead of set by mistake

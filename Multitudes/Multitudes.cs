@@ -1,46 +1,34 @@
 ﻿using System;
-using System.Collections;
-using System.Linq;
-using System.Reflection;
 using BepInEx;
+using BepInEx.Configuration;
+using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace Multitudes
 {
-    public class CommandHelper
-    {
-        public static void RegisterCommands(RoR2.Console self)
-        {
-            var types = typeof(CommandHelper).Assembly.GetTypes();
-            var catalog = self.GetFieldValue<IDictionary>("concommandCatalog");
-
-            foreach (var methodInfo in types.SelectMany(x => x.GetMethods(BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic)))
-            {
-                var customAttributes = methodInfo.GetCustomAttributes(false);
-                foreach (var attribute in customAttributes.OfType<ConCommandAttribute>())
-                {
-                    var conCommand = Reflection.GetNestedType<RoR2.Console>("ConCommand").Instantiate();
-
-                    conCommand.SetFieldValue("flags", attribute.flags);
-                    conCommand.SetFieldValue("helpText", attribute.helpText);
-                    conCommand.SetFieldValue("action", (RoR2.Console.ConCommandDelegate)Delegate.CreateDelegate(typeof(RoR2.Console.ConCommandDelegate), methodInfo));
-
-                    catalog[attribute.commandName.ToLower()] = conCommand;
-                }
-            }
-        }
-    }
-
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("dev.wildbook.multitudes", "Multitudes", "1.2.1")]
+    [BepInPlugin("dev.wildbook.multitudes", "Multitudes", "1.3.0")]
     public class Multitudes : BaseUnityPlugin
     {
-        public static int Multiplier = 4;
+        private static ConfigWrapper<int> MultiplierConfig { get; set; }
+
+        public int Multiplier
+        {
+            get => MultiplierConfig.Value * (enabled ? 1 : 0);
+            protected set => MultiplierConfig.Value = value;
+        }
 
         public void Awake()
         {
+            MultiplierConfig = Config.Wrap(
+                "Game",
+                "Multiplier",
+                "Sets the multiplier for Multitudes.",
+                4);
+
             On.RoR2.Console.Awake += (orig, self) =>
             {
                 CommandHelper.RegisterCommands(self);
@@ -57,6 +45,8 @@ namespace Multitudes
                 c.EmitDelegate<Func<int, int>>(x => x * Multiplier);
             };
 
+            Run.onRunStartGlobal += run => { SendMultiplierChat(); };
+
             On.RoR2.TeleporterInteraction.GetPlayerCountInRadius += (orig, self) => orig(self) * Multiplier;
         }
 
@@ -64,10 +54,36 @@ namespace Multitudes
         [ConCommand(commandName = "mod_wb_set_multiplier", flags = ConVarFlags.None, helpText = "Lets you pretend to have more friends than you actually do.")]
         private static void CCSetMultiplier(ConCommandArgs args)
         {
-            if (args.Count != 1 || !int.TryParse(args[0], out Multiplier))
-                Debug.Log("Invalid arguments.");
+            args.CheckArgumentCount(1);
+
+            if (!int.TryParse(args[0], out var multiplier))
+            {
+                Debug.Log("Invalid argument.");
+            }
             else
-                Debug.Log($"Multiplier set to {Multiplier}. Good luck!");
+            {
+                MultiplierConfig.Value = multiplier;
+                Debug.Log($"Multiplier set to {MultiplierConfig.Value}. Good luck!");
+                SendMultiplierChat();
+            }
+        }
+
+        private static void SendMultiplierChat()
+        {
+            // If we're not host, we're not setting it for the current lobby
+            // That also means no one cares what our Multitudes is set to
+            if (!NetworkServer.active)
+                return;
+
+            Chat.SendBroadcastChat(
+                new Chat.SimpleChatMessage
+                {
+                    baseToken = "<color=lightblue>Multitudes set to: </color> {0}",
+                    paramTokens = new[]
+                    {
+                        MultiplierConfig.Value.ToString()
+                    }
+                });
         }
 
         // Random example command to set multiplier with
@@ -76,7 +92,7 @@ namespace Multitudes
         {
             Debug.Log(args.Count != 0
                 ? "Invalid arguments. Did you mean mod_wb_set_multiplier?"
-                : $"Your multiplier is currently {Multiplier}. Good luck!");
+                : $"Your multiplier is currently {MultiplierConfig.Value}. Good luck!");
         }
     }
 }

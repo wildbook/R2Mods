@@ -5,9 +5,14 @@ VisualStudioVersion = 16.0.28729.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Multitudes", "Multitudes\Multitudes.csproj", "{0D465267-7A1C-4AD0-85DD-40349844EDE8}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TooManyFriends", "TooManyFriends\TooManyFriends.csproj", "{736C5B51-B1EA-43C1-9696-6535715AEB75}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TooManyFriends", "TooManyFriends\TooManyFriends.csproj", "{736C5B51-B1EA-43C1-9696-6535715AEB75}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "Utilities", "Utilities\Utilities.shproj", "{6189BDE4-E024-4872-B6C3-B5CA2C4FCDE5}"
 EndProject
 Global
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Utilities\Utilities.projitems*{6189bde4-e024-4872-b6c3-b5ca2c4fcde5}*SharedItemsImports = 13
+	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
