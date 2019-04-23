@@ -32,11 +32,13 @@
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>..\libs\UnityEngine.IMGUIModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.JSONSerializeModule">
+      <HintPath>..\libs\UnityEngine.JSONSerializeModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.Networking">
       <HintPath>..\libs\UnityEngine.Networking.dll</HintPath>
     </Reference>
   </ItemGroup>
 
   <Import Project="..\Utilities\Utilities.projitems" Label="Shared" />
-
 </Project>

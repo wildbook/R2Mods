@@ -32,6 +32,9 @@
     <Reference Include="UnityEngine.IMGUIModule">
       <HintPath>..\..\# RoR2 Modding\RoR2Mods\libs\UnityEngine.IMGUIModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.JSONSerializeModule">
+      <HintPath>..\libs\UnityEngine.JSONSerializeModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.Networking">
       <HintPath>..\..\# RoR2 Modding\RoR2Mods\libs\UnityEngine.Networking.dll</HintPath>
     </Reference>
