@@ -1,7 +1,6 @@
 ﻿using System;
 using BepInEx;
 using BepInEx.Configuration;
-using Mono.Cecil.Cil;
 using MonoMod.Cil;
 using RoR2;
 using UnityEngine;
