@@ -11,7 +11,7 @@ namespace MiniRpcLib.Action
         public Type SendType { get; }
         public Type ReceiveType { get; }
         public int CommandId { get; set; }
-        public ExecuteOn ExecuteOn { get; set; }
+        public Target ExecuteOn { get; set; }
         public Action<NetworkUser, object> Action { get; set; }
 
         public void Invoke(object parameter, NetworkUser target = null)
@@ -20,7 +20,7 @@ namespace MiniRpcLib.Action
             MiniRpc.InvokeAction(Guid, CommandId, parameter, target);
         }
 
-        public RpcAction(string guid, int commandId, ExecuteOn executeOn, Type sendType, Type receiveType, Action<NetworkUser, object> action)
+        public RpcAction(string guid, int commandId, Target executeOn, Type sendType, Type receiveType, Action<NetworkUser, object> action)
         {
             Action      = action;
             ExecuteOn   = executeOn;
@@ -36,7 +36,7 @@ namespace MiniRpcLib.Action
         public new Action<NetworkUser, TReceive> Action => (x, y) => AsIRpcAction.Action(x, y);
         public void Invoke(TSend parameter, NetworkUser target = null) => base.Invoke(parameter, target);
 
-        public RpcAction(string guid, int commandId, ExecuteOn executeOn, Action<NetworkUser, TReceive> action) :
+        public RpcAction(string guid, int commandId, Target executeOn, Action<NetworkUser, TReceive> action) :
             base(guid, commandId, executeOn, typeof(TSend), typeof(TReceive), (x, y) => action(x, (TReceive)y)) { }
     }
 }

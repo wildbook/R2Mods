@@ -20,7 +20,7 @@ namespace MiniRpcLib.Func
         Type ResponseSendType { get; }
         Type ResponseReceiveType { get; }
         int FunctionId { get; }
-        ExecuteOn ExecuteOn { get; }
+        Target ExecuteOn { get; }
         Func<NetworkUser, object, object> Function { get; }
         Task<object> Invoke(object parameter, NetworkUser user = null);
     }

@@ -9,7 +9,7 @@ namespace MiniRpcLib.Action
         Type SendType { get; }
         Type ReceiveType { get; }
         int CommandId { get; }
-        ExecuteOn ExecuteOn { get; }
+        Target ExecuteOn { get; }
         Action<NetworkUser, object> Action { get; }
         void Invoke(object parameter, NetworkUser target = null);
     }
@@ -20,7 +20,7 @@ namespace MiniRpcLib.Action
         Type SendType { get; }
         Type ReceiveType { get; }
         int CommandId { get; }
-        ExecuteOn ExecuteOn { get; }
+        Target ExecuteOn { get; }
         Action<NetworkUser, object> Action { get; }
         void Invoke(TSend parameter, NetworkUser target = null);
     }

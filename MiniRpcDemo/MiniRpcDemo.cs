@@ -43,13 +43,13 @@ namespace MiniRpcDemo
             var miniRpc = MiniRpc.CreateInstance(ModGuid);
 
             // Define two commands, both transmitting a single string
-            ExampleCommandHost   = miniRpc.RegisterAction(ExecuteOn.Server, (NetworkUser user, string x) => Debug.Log($"[Host] {user?.userName} sent us: {x}"));
-            ExampleCommandClient = miniRpc.RegisterAction(ExecuteOn.Client, (NetworkUser user, string x) => Debug.Log($"[Client] {user?.userName} sent us: {x}"));
+            ExampleCommandHost   = miniRpc.RegisterAction(Target.Server, (NetworkUser user, string x) => Debug.Log($"[Host] {user?.userName} sent us: {x}"));
+            ExampleCommandClient = miniRpc.RegisterAction(Target.Client, (NetworkUser user, string x) => Debug.Log($"[Client] {user?.userName} sent us: {x}"));
 
             // Define two commands, both deserializing the data themselves
 
             // This command will be called by a client (including the host), and executed on the server (host)
-            ExampleCommandHostCustom = miniRpc.RegisterAction(ExecuteOn.Server, (user, x) =>
+            ExampleCommandHostCustom = miniRpc.RegisterAction(Target.Server, (user, x) =>
             {
                 // This is what the server will execute when a client invokes the IRpcAction
 
@@ -60,7 +60,7 @@ namespace MiniRpcDemo
             });
 
             // This command will be called by the host, and executed on all clients
-            ExampleCommandClientCustom = miniRpc.RegisterAction(ExecuteOn.Client, (user, x) =>
+            ExampleCommandClientCustom = miniRpc.RegisterAction(Target.Client, (user, x) =>
             {
                 // This is what all clients will execute when the server invokes the IRpcAction
 
@@ -70,13 +70,13 @@ namespace MiniRpcDemo
                 Debug.Log($"[Client] {user?.userName} sent us: {str} {int32}");
             });
 
-            ExampleFuncHost = miniRpc.RegisterFunc(ExecuteOn.Server, (user, x) =>
+            ExampleFuncHost = miniRpc.RegisterFunc(Target.Server, (user, x) =>
             {
                 Debug.Log($"[Host] {user?.userName} sent us: {x}");
                 return $"Hello from the server, received {x}!";
             });
 
-            ExampleFuncClient = miniRpc.RegisterFunc(ExecuteOn.Client, (user, x) =>
+            ExampleFuncClient = miniRpc.RegisterFunc(Target.Client, (user, x) =>
             {
                 Debug.Log($"[Client] {user?.userName} sent us: {x}");
                 return $"Hello from the client, received {x}!";

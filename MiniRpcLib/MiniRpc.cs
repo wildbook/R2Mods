@@ -37,8 +37,8 @@ namespace MiniRpcLib
         public static void Initialize(RpcLayer.RpcLayer layer)
         {
             _layer = layer;
-            _layer.ReceivedC2S += x => HandleRpc(ExecuteOn.Server, x);
-            _layer.ReceivedS2C += x => HandleRpc(ExecuteOn.Client, x);
+            _layer.ReceivedC2S += x => HandleRpc(Target.Server, x);
+            _layer.ReceivedS2C += x => HandleRpc(Target.Client, x);
 
             On.RoR2.Networking.NetworkMessageHandlerAttribute.CollectHandlers += orig =>
             {
@@ -50,8 +50,8 @@ namespace MiniRpcLib
 
             var instance = CreateInstance(FuncChannelGuid);
 
-            _funcRequest  = instance.RegisterAction(ExecuteOn.Any, HandleFunctionRequest);
-            _funcResponse = instance.RegisterAction(ExecuteOn.Any, HandleFunctionResponse);
+            _funcRequest  = instance.RegisterAction(Target.Any, HandleFunctionRequest);
+            _funcResponse = instance.RegisterAction(Target.Any, HandleFunctionResponse);
         }
 
         private static void HandleFunctionRequest(NetworkUser nu, NetworkReader reader)
@@ -89,7 +89,7 @@ namespace MiniRpcLib
             return new MiniRpcInstance(guid);
         }
 
-        private static void HandleRpc(ExecuteOn commandType, NetworkMessage netMsg)
+        private static void HandleRpc(Target commandType, NetworkMessage netMsg)
         {
             Log($"{commandType} Received command.");
 
@@ -104,7 +104,7 @@ namespace MiniRpcLib
 
             Log($"{commandType} Received command: {guid}[{commandId}]");
 
-            if (action.ExecuteOn != ExecuteOn.Any && action.ExecuteOn != commandType)
+            if (action.ExecuteOn != Target.Any && action.ExecuteOn != commandType)
             {
                 var err = $"Can not invoke {commandType} command as {action.ExecuteOn}.";
                 LogError(err);
@@ -127,10 +127,10 @@ namespace MiniRpcLib
             }
         }
 
-        internal static IRpcAction<T> RegisterAction<T>(string guid, ExecuteOn target, Action<NetworkUser, T> action)
+        internal static IRpcAction<T> RegisterAction<T>(string guid, Target target, Action<NetworkUser, T> action)
             => RegisterAction<T, T>(guid, target, action);
 
-        internal static IRpcAction<TSend> RegisterAction<TSend, TReceive>(string guid, ExecuteOn target,
+        internal static IRpcAction<TSend> RegisterAction<TSend, TReceive>(string guid, Target target,
             Action<NetworkUser, TReceive> action)
         {
             var actions = Actions[guid];
@@ -144,12 +144,12 @@ namespace MiniRpcLib
         }
 
         internal static IRpcFunc<TRequest, TResponse> RegisterFunc<TRequest, TResponse>
-            (string guid, ExecuteOn target, Func<NetworkUser, TRequest, TResponse> func)
+            (string guid, Target target, Func<NetworkUser, TRequest, TResponse> func)
             => RegisterFunc<TRequest, TRequest, TResponse, TResponse>(guid, target, func);
 
         internal static IRpcFunc<TRequestSend, TResponseReceive> RegisterFunc<TRequestSend, TRequestReceive,
                 TResponseSend, TResponseReceive>
-            (string guid, ExecuteOn target, Func<NetworkUser, TRequestReceive, TResponseSend> func)
+            (string guid, Target target, Func<NetworkUser, TRequestReceive, TResponseSend> func)
         {
             var functions = Functions[guid];
             var id = functions.Count;
@@ -201,16 +201,16 @@ namespace MiniRpcLib
 
             switch (rpc.ExecuteOn)
             {
-                case ExecuteOn.Any:
+                case Target.Any:
                     if (IsHost)
-                        goto case ExecuteOn.Server;
+                        goto case Target.Server;
                     else
-                        goto case ExecuteOn.Client;
-                case ExecuteOn.Server:
+                        goto case Target.Client;
+                case Target.Server:
                     if (target) throw new ArgumentException("Specifying a target is not allowed for C2S packets as they are always sent to the server.");
                     _layer.SendC2S(guid, commandId, argument);
                     break;
-                case ExecuteOn.Client:
+                case Target.Client:
                     _layer.SendS2C(guid, commandId, argument, target);
                     break;
                 default:

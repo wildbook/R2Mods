@@ -14,12 +14,12 @@ namespace MiniRpcLib.Func
         public Type ResponseReceiveType { get; }
         
         public int FunctionId { get; }
-        public ExecuteOn ExecuteOn { get; }
+        public Target ExecuteOn { get; }
         public Func<NetworkUser, object, object> Function { get; }
 
         public async Task<object> Invoke(object argument, NetworkUser target = null) => await MiniRpc.InvokeFunc(Guid, FunctionId, argument, target).ContinueWith(x => x.Result);
 
-        protected RpcFunc(string guid, int commandId, ExecuteOn target, Type requestSendType, Type requestReceiveType, Type responseSendType, Type responseReceiveType, Func<NetworkUser, object, object> func)
+        protected RpcFunc(string guid, int commandId, Target target, Type requestSendType, Type requestReceiveType, Type responseSendType, Type responseReceiveType, Func<NetworkUser, object, object> func)
         {
             Guid = guid;
             FunctionId = commandId;
@@ -38,7 +38,7 @@ namespace MiniRpcLib.Func
         public Task<TResponseReceive> InvokeAsync(TRequestSend parameter, NetworkUser target = null) => base.Invoke(parameter, target).ContinueWith(x => (TResponseReceive)x.Result);
         public TResponseReceive Invoke(TRequestSend parameter, NetworkUser target = null) => InvokeAsync(parameter, target).GetAwaiter().GetResult();
 
-        public RpcFunc(string guid, int funcId, ExecuteOn target, Func<NetworkUser, TRequestReceive, TResponseSend> func) :
+        public RpcFunc(string guid, int funcId, Target target, Func<NetworkUser, TRequestReceive, TResponseSend> func) :
             base(guid, funcId, target, 
                 typeof(TRequestSend), typeof(TRequestReceive), 
                 typeof(TResponseSend), typeof(TResponseReceive), 

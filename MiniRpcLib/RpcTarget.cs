@@ -1,6 +1,6 @@
 ﻿namespace MiniRpcLib
 {
-    public enum ExecuteOn
+    public enum Target
     {
         Server,
         Client,
