@@ -24,8 +24,11 @@ namespace MiniRpcLib
         private static readonly Dictionary<int, Action<NetworkReader>> AwaitingResponse =
             new Dictionary<int, Action<NetworkReader>>();
 
-        private static IRpcAction<Action<NetworkWriter>> _funcRequest;
-        private static IRpcAction<Action<NetworkWriter>> _funcResponse;
+        private static IRpcAction<Action<NetworkWriter>> _funcRequestS2C;
+        private static IRpcAction<Action<NetworkWriter>> _funcResponseS2C;
+
+        private static IRpcAction<Action<NetworkWriter>> _funcRequestC2S;
+        private static IRpcAction<Action<NetworkWriter>> _funcResponseC2S;
 
         private static RpcLayer.RpcLayer _layer;
 
@@ -50,11 +53,16 @@ namespace MiniRpcLib
 
             var instance = CreateInstance(FuncChannelGuid);
 
-            _funcRequest  = instance.RegisterAction(Target.Any, HandleFunctionRequest);
-            _funcResponse = instance.RegisterAction(Target.Any, HandleFunctionResponse);
+            // Request targets client, Response targets server
+            _funcResponseS2C = instance.RegisterAction(Target.Server, HandleFunctionResponse);
+            _funcRequestS2C  = instance.RegisterAction(Target.Client, (_, x) => HandleFunctionRequest(_funcResponseS2C, null, x));
+
+            // Request targets server, Response targets client
+            _funcResponseC2S = instance.RegisterAction(Target.Client, HandleFunctionResponse);
+            _funcRequestC2S  = instance.RegisterAction(Target.Server, (nu, x) => HandleFunctionRequest(_funcResponseC2S, nu, x));
         }
 
-        private static void HandleFunctionRequest(NetworkUser nu, NetworkReader reader)
+        private static void HandleFunctionRequest(IRpcAction<Action<NetworkWriter>> response, NetworkUser nu, NetworkReader reader)
         {
             Log("HandleFunctionRequest");
             var guid     = reader.ReadString();
@@ -67,7 +75,7 @@ namespace MiniRpcLib
                     ? reader
                     : reader.ReadObject(func.RequestReceiveType));
 
-            _funcResponse.Invoke(writer =>
+            response.Invoke(writer =>
             {
                 writer.Write(invokeId);
                 writer.WriteObject(result);
@@ -104,7 +112,7 @@ namespace MiniRpcLib
 
             Log($"{commandType} Received command: {guid}[{commandId}]");
 
-            if (action.ExecuteOn != Target.Any && action.ExecuteOn != commandType)
+            if (action.ExecuteOn != commandType)
             {
                 var err = $"Can not invoke {commandType} command as {action.ExecuteOn}.";
                 LogError(err);
@@ -163,22 +171,45 @@ namespace MiniRpcLib
             return rpcFunc;
         }
 
-        internal static async Task<object> InvokeFunc(string guid, int funcId, object argument, NetworkUser target = null)
+        internal static async Task InvokeFunc(string guid, int funcId, object argument, Action<object>[] callbacks, NetworkUser target = null)
         {
             var invokeId = Random.Next(int.MinValue, int.MaxValue);
             var t = new TaskCompletionSource<object>();
 
+            var func = Functions[guid][funcId];
+            int targetCount;
+
+            switch (func.ExecuteOn)
+            {
+                case Target.Server:
+                case Target.Client when target != null:
+                    targetCount = 1;
+                    break;
+                case Target.Client:
+                    targetCount = NetworkServer.connections.Count;
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
+
             AwaitingResponse[invokeId] = x =>
             {
-                AwaitingResponse.Remove(invokeId);
+                if (--targetCount <= 0)
+                {
+                    AwaitingResponse.Remove(invokeId);
+                    t.SetResult(null);
+                }
+
                 var retReceiveType = Functions[guid][funcId].ResponseReceiveType;
                 Log($"AwaitingResponse[invokeId] {retReceiveType}");
                 var result = typeof(NetworkReader) == retReceiveType ? x : x.ReadObject(retReceiveType);
-                t.SetResult(result);
+                foreach(var callback in callbacks)
+                    callback(result);
                 Log($"AwaitingResponse[invokeId] {result}");
             };
 
-            _funcRequest.Invoke(x =>
+
+            (func.ExecuteOn == Target.Client ? _funcRequestS2C : _funcRequestC2S).Invoke(x =>
             {
                 x.Write(guid);
                 x.Write(funcId);
@@ -186,12 +217,11 @@ namespace MiniRpcLib
                 x.WriteObject(argument);
             }, target);
 
-            return await t.Task;
+            await t.Task;
         }
 
         internal static void InvokeAction(string guid, int commandId, object argument, NetworkUser target = null)
         {
-            Log($"{guid}[{commandId}] Sending command | {argument}");
             var rpc = Actions[guid][commandId];
 
             if (rpc.SendType != argument.GetType())
@@ -201,13 +231,10 @@ namespace MiniRpcLib
 
             switch (rpc.ExecuteOn)
             {
-                case Target.Any:
-                    if (IsHost)
-                        goto case Target.Server;
-                    else
-                        goto case Target.Client;
                 case Target.Server:
-                    if (target) throw new ArgumentException("Specifying a target is not allowed for C2S packets as they are always sent to the server.");
+                    if (target && target.connectionToServer != ClientScene.readyConnection)
+                        throw new ArgumentException("Specifying a target is not allowed for C2S packets as they are always sent to the server.");
+
                     _layer.SendC2S(guid, commandId, argument);
                     break;
                 case Target.Client:
@@ -217,8 +244,5 @@ namespace MiniRpcLib
                     throw new ArgumentOutOfRangeException();
             }
         }
-
-        public static bool IsHost => NetworkServer.active;
-        public static bool HasClient => ClientScene.readyConnection != null;
     }
 }

@@ -107,6 +107,9 @@ namespace MiniRpcLib.Extensions
                 case ulong x:
                     writer.Write(x);
                     break;
+                case Action<NetworkWriter> x:
+                    x(writer);
+                    break;
                 default:
                     throw new ArgumentException(
                         $"The argument passed to WriteObject ({obj.GetType()}) is not a type supported by NetworkWriter.",

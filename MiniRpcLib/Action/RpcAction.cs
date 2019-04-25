@@ -16,7 +16,6 @@ namespace MiniRpcLib.Action
 
         public void Invoke(object parameter, NetworkUser target = null)
         {
-            Debug.Log($"Sending command | {parameter}");
             MiniRpc.InvokeAction(Guid, CommandId, parameter, target);
         }
 

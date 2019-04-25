@@ -1,14 +1,17 @@
 using System;
 using System.Threading.Tasks;
+using JetBrains.Annotations;
 using RoR2;
 
 namespace MiniRpcLib.Func
 {
-    public interface IRpcFunc<in TRequestSend, TResponseReceive>
+    public interface IRpcFunc<in TRequestSend, out TResponseReceive>
     {
-        Task<TResponseReceive> InvokeAsync(TRequestSend parameter, NetworkUser target = null);
+        Task InvokeAsync(TRequestSend parameter, Action<TResponseReceive>[] callbacks = null, NetworkUser target = null);
+        Task InvokeAsync(TRequestSend parameter, Action<TResponseReceive> callback = null, NetworkUser target = null);
 
-        TResponseReceive Invoke(TRequestSend parameter, NetworkUser target = null);
+        void Invoke(TRequestSend parameter, Action<TResponseReceive>[] callbacks = null, NetworkUser target = null);
+        void Invoke(TRequestSend parameter, Action<TResponseReceive> callback = null, NetworkUser target = null);
     }
 
     public interface IRpcFunc
@@ -22,6 +25,6 @@ namespace MiniRpcLib.Func
         int FunctionId { get; }
         Target ExecuteOn { get; }
         Func<NetworkUser, object, object> Function { get; }
-        Task<object> Invoke(object parameter, NetworkUser user = null);
+        Task Invoke(object parameter, Action<object>[] callbacks = null, NetworkUser user = null);
     }
 }

@@ -14,12 +14,12 @@ namespace MiniRpcDemo
     [BepInPlugin(ModGuid, ModName, ModVer)]
     public class MiniRpcDemo : BaseUnityPlugin
     {
-        private const string ModVer  = "1.0";
+        private const string ModVer = "1.0";
         private const string ModName = "MiniRpcDemo";
         private const string ModGuid = "dev.wildbook.minirpc_demo";
 
         // Define two actions sending/receiving a single string
-        public IRpcAction<string> ExampleCommandHost   { get; set; }
+        public IRpcAction<string> ExampleCommandHost { get; set; }
         public IRpcAction<string> ExampleCommandClient { get; set; }
 
         // Define two actions that manages reading/writing messages themselves
@@ -43,8 +43,10 @@ namespace MiniRpcDemo
             var miniRpc = MiniRpc.CreateInstance(ModGuid);
 
             // Define two commands, both transmitting a single string
-            ExampleCommandHost   = miniRpc.RegisterAction(Target.Server, (NetworkUser user, string x) => Debug.Log($"[Host] {user?.userName} sent us: {x}"));
-            ExampleCommandClient = miniRpc.RegisterAction(Target.Client, (NetworkUser user, string x) => Debug.Log($"[Client] {user?.userName} sent us: {x}"));
+            ExampleCommandHost = miniRpc.RegisterAction(Target.Server,
+                (NetworkUser user, string x) => Debug.Log($"[Host] {user?.userName} sent us: {x}"));
+            ExampleCommandClient = miniRpc.RegisterAction(Target.Client,
+                (NetworkUser user, string x) => Debug.Log($"[Client] Host sent us: {x}"));
 
             // Define two commands, both deserializing the data themselves
 
@@ -53,7 +55,7 @@ namespace MiniRpcDemo
             {
                 // This is what the server will execute when a client invokes the IRpcAction
 
-                var str   = x.ReadString();
+                var str = x.ReadString();
                 var int32 = x.ReadInt32();
 
                 Debug.Log($"[Host] {user?.userName} sent us: {str} {int32}");
@@ -64,10 +66,10 @@ namespace MiniRpcDemo
             {
                 // This is what all clients will execute when the server invokes the IRpcAction
 
-                var str   = x.ReadString();
+                var str = x.ReadString();
                 var int32 = x.ReadInt32();
 
-                Debug.Log($"[Client] {user?.userName} sent us: {str} {int32}");
+                Debug.Log($"[Client] Host sent us: {str} {int32}");
             });
 
             ExampleFuncHost = miniRpc.RegisterFunc(Target.Server, (user, x) =>
@@ -78,7 +80,7 @@ namespace MiniRpcDemo
 
             ExampleFuncClient = miniRpc.RegisterFunc(Target.Client, (user, x) =>
             {
-                Debug.Log($"[Client] {user?.userName} sent us: {x}");
+                Debug.Log($"[Client] Host sent us: {x}");
                 return $"Hello from the client, received {x}!";
             });
         }
@@ -115,16 +117,20 @@ namespace MiniRpcDemo
 
             if (Input.GetKeyDown(KeyCode.Insert))
             {
-                var result = await ExampleFuncHost.InvokeAsync(true);
-                
-                Debug.Log($"Received response ExampleFuncHost: {result}");
+                Debug.Log("[MiniRpcDemo] Sending request ExampleFuncHost.");
+                ExampleFuncHost.Invoke(true, result =>
+                {
+                    Debug.Log($"[MiniRpcDemo] Received response ExampleFuncHost: {result}");
+                });
             }
-            
+
             if (Input.GetKeyDown(KeyCode.Delete))
             {
-                var result = await ExampleFuncClient.InvokeAsync(true);
-                
-                Debug.Log($"Received response ExampleFuncClient: {result}");
+                Debug.Log("[MiniRpcDemo] Sending request ExampleFuncClient.");
+                ExampleFuncClient.Invoke(true, result =>
+                {
+                    Debug.Log($"[MiniRpcDemo] Received response ExampleFuncClient: {result}");
+                });
             }
         }
     }
