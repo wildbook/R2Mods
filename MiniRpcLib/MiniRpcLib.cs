@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using MiniRpcLib.RpcLayer;
 using UnityEngine;
 
 namespace MiniRpcLib
@@ -18,7 +19,7 @@ namespace MiniRpcLib
             On.RoR2.RoR2Application.UnitySystemConsoleRedirector.Redirect += orig => { };
             
             Debug.Log("Initializing MiniRpc");
-            MiniRpc.Initialize();
+            MiniRpc.Initialize(new UnityMessageHandler());
         }
     }
 }

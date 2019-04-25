@@ -2,7 +2,7 @@
 using RoR2;
 using UnityEngine;
 
-namespace MiniRpcLib
+namespace MiniRpcLib.Action
 {
     internal class RpcAction : IRpcAction
     {
@@ -14,10 +14,10 @@ namespace MiniRpcLib
         public ExecuteOn ExecuteOn { get; set; }
         public Action<NetworkUser, object> Action { get; set; }
 
-        public void Invoke(object argument)
+        public void Invoke(object parameter, NetworkUser target = null)
         {
-            Debug.Log($"Sending command | {argument}");
-            MiniRpc.InvokeAction(Guid, CommandId, argument);
+            Debug.Log($"Sending command | {parameter}");
+            MiniRpc.InvokeAction(Guid, CommandId, parameter, target);
         }
 
         public RpcAction(string guid, int commandId, ExecuteOn executeOn, Type sendType, Type receiveType, Action<NetworkUser, object> action)
@@ -34,7 +34,7 @@ namespace MiniRpcLib
     internal class RpcAction<TSend, TReceive> : RpcAction, IRpcAction<TSend>
     {
         public new Action<NetworkUser, TReceive> Action => (x, y) => AsIRpcAction.Action(x, y);
-        public void Invoke(TSend argument) => AsIRpcAction.Invoke(argument);
+        public void Invoke(TSend parameter, NetworkUser target = null) => base.Invoke(parameter, target);
 
         public RpcAction(string guid, int commandId, ExecuteOn executeOn, Action<NetworkUser, TReceive> action) :
             base(guid, commandId, executeOn, typeof(TSend), typeof(TReceive), (x, y) => action(x, (TReceive)y)) { }

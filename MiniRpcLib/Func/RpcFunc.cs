@@ -2,7 +2,7 @@ using System;
 using System.Threading.Tasks;
 using RoR2;
 
-namespace MiniRpcLib
+namespace MiniRpcLib.Func
 {
     internal class RpcFunc : IRpcFunc
     {
@@ -17,7 +17,7 @@ namespace MiniRpcLib
         public ExecuteOn ExecuteOn { get; }
         public Func<NetworkUser, object, object> Function { get; }
 
-        public async Task<object> Invoke(object argument) => await MiniRpc.InvokeFunc(Guid, FunctionId, argument).ContinueWith(x => (object)x.Result);
+        public async Task<object> Invoke(object argument, NetworkUser target = null) => await MiniRpc.InvokeFunc(Guid, FunctionId, argument, target).ContinueWith(x => x.Result);
 
         protected RpcFunc(string guid, int commandId, ExecuteOn target, Type requestSendType, Type requestReceiveType, Type responseSendType, Type responseReceiveType, Func<NetworkUser, object, object> func)
         {
@@ -35,8 +35,8 @@ namespace MiniRpcLib
 
     internal class RpcFunc<TRequestSend, TRequestReceive, TResponseSend, TResponseReceive> : RpcFunc, IRpcFunc<TRequestSend, TResponseReceive>
     {
-        public Task<TResponseReceive> InvokeAsync(TRequestSend parameter) => base.Invoke(parameter).ContinueWith(x => (TResponseReceive)x.Result);
-        public TResponseReceive Invoke(TRequestSend parameter) => InvokeAsync(parameter).GetAwaiter().GetResult();
+        public Task<TResponseReceive> InvokeAsync(TRequestSend parameter, NetworkUser target = null) => base.Invoke(parameter, target).ContinueWith(x => (TResponseReceive)x.Result);
+        public TResponseReceive Invoke(TRequestSend parameter, NetworkUser target = null) => InvokeAsync(parameter, target).GetAwaiter().GetResult();
 
         public RpcFunc(string guid, int funcId, ExecuteOn target, Func<NetworkUser, TRequestReceive, TResponseSend> func) :
             base(guid, funcId, target, 

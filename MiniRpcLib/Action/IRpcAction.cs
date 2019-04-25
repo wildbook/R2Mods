@@ -1,7 +1,7 @@
 ﻿using System;
 using RoR2;
 
-namespace MiniRpcLib
+namespace MiniRpcLib.Action
 {
     public interface IRpcAction
     {
@@ -11,7 +11,7 @@ namespace MiniRpcLib
         int CommandId { get; }
         ExecuteOn ExecuteOn { get; }
         Action<NetworkUser, object> Action { get; }
-        void Invoke(object parameter);
+        void Invoke(object parameter, NetworkUser target = null);
     }
 
     public interface IRpcAction<in TSend>
@@ -22,6 +22,6 @@ namespace MiniRpcLib
         int CommandId { get; }
         ExecuteOn ExecuteOn { get; }
         Action<NetworkUser, object> Action { get; }
-        void Invoke(TSend parameter);
+        void Invoke(TSend parameter, NetworkUser target = null);
     }
 }

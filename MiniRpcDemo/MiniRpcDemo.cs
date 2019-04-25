@@ -1,6 +1,8 @@
 ﻿using System;
 using BepInEx;
 using MiniRpcLib;
+using MiniRpcLib.Action;
+using MiniRpcLib.Func;
 using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
