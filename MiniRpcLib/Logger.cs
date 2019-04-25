@@ -6,14 +6,14 @@ namespace MiniRpcLib
     [Flags]
     public enum LogLevel
     {
-        Info,
-        Error,
+        Info = 1,
+        Error = 2,
     }
     
     public class Logger
     {
         public string Tag = "";
-        public LogLevel Level = LogLevel.Info;
+        public LogLevel Level = LogLevel.Info | LogLevel.Error;
         private bool ShouldLog(LogLevel level) => (Level & level) != 0;
         
         public void Log(string x)
