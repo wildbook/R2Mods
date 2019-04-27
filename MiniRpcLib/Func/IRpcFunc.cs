@@ -1,6 +1,5 @@
 using System;
 using System.Threading.Tasks;
-using JetBrains.Annotations;
 using RoR2;
 
 namespace MiniRpcLib.Func
@@ -16,7 +15,7 @@ namespace MiniRpcLib.Func
 
     public interface IRpcFunc
     {
-        string Guid { get; }
+        uint Guid { get; }
         Type RequestSendType { get; }
         Type RequestReceiveType { get; }
         

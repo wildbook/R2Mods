@@ -39,7 +39,7 @@ namespace MiniRpcLib.RpcLayer
             clientMessageHandlers.Add(clientRpcHandler);
         }
 
-        public override void SendC2S(string guid, int commandId, object argument)
+        public override void SendC2S(uint guid, int commandId, object argument)
         {
             if (!NetworkClient.active)
                 throw new UnauthorizedAccessException(
@@ -60,7 +60,7 @@ namespace MiniRpcLib.RpcLayer
             ClientScene.readyConnection.SendWriter(networkWriter, ChannelId);
         }
 
-        public override void SendS2C(string guid, int commandId, object argument, NetworkUser target = null)
+        public override void SendS2C(uint guid, int commandId, object argument, NetworkUser target = null)
         {
             if (!NetworkServer.active)
                 throw new UnauthorizedAccessException(

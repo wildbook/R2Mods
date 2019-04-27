@@ -5,7 +5,7 @@ namespace MiniRpcLib.Action
 {
     public interface IRpcAction
     {
-        string Guid { get; }
+        uint Guid { get; }
         Type SendType { get; }
         Type ReceiveType { get; }
         int CommandId { get; }
@@ -16,7 +16,7 @@ namespace MiniRpcLib.Action
 
     public interface IRpcAction<in TSend>
     {
-        string Guid { get; }
+        uint Guid { get; }
         Type SendType { get; }
         Type ReceiveType { get; }
         int CommandId { get; }

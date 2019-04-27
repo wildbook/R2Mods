@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using MiniRpcLib.Action;
 using MiniRpcLib.Func;
 using RoR2;
@@ -9,9 +9,9 @@ namespace MiniRpcLib
 {
     public class MiniRpcInstance
     {
-        private readonly string _guid;
+        private readonly uint _guid;
 
-        internal MiniRpcInstance(string guid) => _guid = guid;
+        internal MiniRpcInstance(uint guid) => _guid = guid;
 
         public IRpcAction<Action<NetworkWriter>> RegisterAction(Target target, Action<NetworkUser, NetworkReader> action)
             => MiniRpc.RegisterAction<Action<NetworkWriter>, NetworkReader>(_guid, target, action);

@@ -11,6 +11,7 @@
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)CommandHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Config.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JenkinsHash.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Reflection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)MethodHelper.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)TinyJson\JSONParser.cs" />

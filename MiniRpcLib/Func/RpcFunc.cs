@@ -7,7 +7,7 @@ namespace MiniRpcLib.Func
 {
     internal class RpcFunc : IRpcFunc
     {
-        public string Guid { get; }
+        public uint Guid { get; }
         public Type RequestSendType { get; }
         public Type RequestReceiveType { get; }
         
@@ -21,7 +21,7 @@ namespace MiniRpcLib.Func
         public async Task Invoke(object argument, Action<object>[] callbacks, NetworkUser target = null) => 
             await MiniRpc.InvokeFunc(Guid, FunctionId, argument, callbacks, target);
 
-        protected RpcFunc(string guid, int commandId, Target target, Type requestSendType, Type requestReceiveType, Type responseSendType, Type responseReceiveType, Func<NetworkUser, object, object> func)
+        protected RpcFunc(uint guid, int commandId, Target target, Type requestSendType, Type requestReceiveType, Type responseSendType, Type responseReceiveType, Func<NetworkUser, object, object> func)
         {
             Guid = guid;
             FunctionId = commandId;
@@ -49,7 +49,7 @@ namespace MiniRpcLib.Func
         public void Invoke(TRequestSend parameter, Action<TResponseReceive> callback = null, NetworkUser target = null) =>
             Invoke(parameter, new[] { callback }, target);
 
-        public RpcFunc(string guid, int funcId, Target target, Func<NetworkUser, TRequestReceive, TResponseSend> func) :
+        public RpcFunc(uint guid, int funcId, Target target, Func<NetworkUser, TRequestReceive, TResponseSend> func) :
             base(guid, funcId, target, 
                 typeof(TRequestSend), typeof(TRequestReceive), 
                 typeof(TResponseSend), typeof(TResponseReceive), 

@@ -8,6 +8,7 @@ using MiniRpcLib.Func;
 using RoR2;
 using RoR2.Networking;
 using UnityEngine.Networking;
+using Utilities;
 
 namespace MiniRpcLib
 {
@@ -15,11 +16,13 @@ namespace MiniRpcLib
     {
         private const string FuncChannelGuid = "mrpc_func";
 
-        private static readonly Dictionary<string, Dictionary<int, IRpcAction>> Actions =
-            new Dictionary<string, Dictionary<int, IRpcAction>>();
+        private static readonly Dictionary<string, uint> Mods = new Dictionary<string, uint>();
 
-        private static readonly Dictionary<string, Dictionary<int, IRpcFunc>> Functions =
-            new Dictionary<string, Dictionary<int, IRpcFunc>>();
+        private static readonly Dictionary<uint, Dictionary<int, IRpcAction>> Actions =
+            new Dictionary<uint, Dictionary<int, IRpcAction>>();
+
+        private static readonly Dictionary<uint, Dictionary<int, IRpcFunc>> Functions =
+            new Dictionary<uint, Dictionary<int, IRpcFunc>>();
 
         private static readonly Dictionary<int, Action<NetworkReader>> AwaitingResponse =
             new Dictionary<int, Action<NetworkReader>>();
@@ -55,18 +58,18 @@ namespace MiniRpcLib
 
             // Request targets client, Response targets server
             _funcResponseS2C = instance.RegisterAction(Target.Server, HandleFunctionResponse);
-            _funcRequestS2C  = instance.RegisterAction(Target.Client, (_, x) => HandleFunctionRequest(_funcResponseS2C, null, x));
+            _funcRequestS2C = instance.RegisterAction(Target.Client, (_, x) => HandleFunctionRequest(_funcResponseS2C, null, x));
 
             // Request targets server, Response targets client
             _funcResponseC2S = instance.RegisterAction(Target.Client, HandleFunctionResponse);
-            _funcRequestC2S  = instance.RegisterAction(Target.Server, (nu, x) => HandleFunctionRequest(_funcResponseC2S, nu, x));
+            _funcRequestC2S = instance.RegisterAction(Target.Server, (nu, x) => HandleFunctionRequest(_funcResponseC2S, nu, x));
         }
 
         private static void HandleFunctionRequest(IRpcAction<Action<NetworkWriter>> response, NetworkUser nu, NetworkReader reader)
         {
             Log("HandleFunctionRequest");
-            var guid     = reader.ReadString();
-            var funcId   = reader.ReadInt32();
+            var guid = reader.ReadUInt32();
+            var funcId = reader.ReadInt32();
             var invokeId = reader.ReadInt32();
             Log($"Received function: {guid}[{funcId}] - {invokeId}");
             var func = Functions[guid][funcId];
@@ -92,31 +95,32 @@ namespace MiniRpcLib
 
         public static MiniRpcInstance CreateInstance(string guid)
         {
-            Actions[guid] = new Dictionary<int, IRpcAction>();
-            Functions[guid] = new Dictionary<int, IRpcFunc>();
-            return new MiniRpcInstance(guid);
+            var hash = Hash.JenkinsOAAT(guid);
+            Mods.Add(guid, hash);
+            Actions.Add(hash, new Dictionary<int, IRpcAction>());
+            Functions.Add(hash, new Dictionary<int, IRpcFunc>());
+            return new MiniRpcInstance(hash);
         }
 
         private static void HandleRpc(Target commandType, NetworkMessage netMsg)
         {
             Log($"{commandType} Received command.");
 
-            var guid = netMsg.reader.ReadString();
+            var guid = netMsg.reader.ReadUInt32();
             var commandId = netMsg.reader.ReadInt32();
 
             if (!Actions.TryGetValue(guid, out var actions) || !actions.TryGetValue(commandId, out var action))
             {
                 LogError($"{commandType} Received unregistered CommandId: {guid}[{commandId}]");
-                throw new Exception($"{commandType} Received unregistered CommandId: {guid}[{commandId}]");
+                return;
             }
 
             Log($"{commandType} Received command: {guid}[{commandId}]");
 
             if (action.ExecuteOn != commandType)
             {
-                var err = $"Can not invoke {commandType} command as {action.ExecuteOn}.";
-                LogError(err);
-                throw new Exception(err);
+                LogError($"Can not invoke {commandType} command as {action.ExecuteOn}.");
+                return;
             }
 
             try
@@ -135,11 +139,10 @@ namespace MiniRpcLib
             }
         }
 
-        internal static IRpcAction<T> RegisterAction<T>(string guid, Target target, Action<NetworkUser, T> action)
+        internal static IRpcAction<T> RegisterAction<T>(uint guid, Target target, Action<NetworkUser, T> action)
             => RegisterAction<T, T>(guid, target, action);
 
-        internal static IRpcAction<TSend> RegisterAction<TSend, TReceive>(string guid, Target target,
-            Action<NetworkUser, TReceive> action)
+        internal static IRpcAction<TSend> RegisterAction<TSend, TReceive>(uint guid, Target target, Action<NetworkUser, TReceive> action)
         {
             var actions = Actions[guid];
             var id = actions.Count;
@@ -152,12 +155,12 @@ namespace MiniRpcLib
         }
 
         internal static IRpcFunc<TRequest, TResponse> RegisterFunc<TRequest, TResponse>
-            (string guid, Target target, Func<NetworkUser, TRequest, TResponse> func)
+            (uint guid, Target target, Func<NetworkUser, TRequest, TResponse> func)
             => RegisterFunc<TRequest, TRequest, TResponse, TResponse>(guid, target, func);
 
         internal static IRpcFunc<TRequestSend, TResponseReceive> RegisterFunc<TRequestSend, TRequestReceive,
                 TResponseSend, TResponseReceive>
-            (string guid, Target target, Func<NetworkUser, TRequestReceive, TResponseSend> func)
+            (uint guid, Target target, Func<NetworkUser, TRequestReceive, TResponseSend> func)
         {
             var functions = Functions[guid];
             var id = functions.Count;
@@ -171,7 +174,7 @@ namespace MiniRpcLib
             return rpcFunc;
         }
 
-        internal static async Task InvokeFunc(string guid, int funcId, object argument, Action<object>[] callbacks, NetworkUser target = null)
+        internal static async Task InvokeFunc(uint guid, int funcId, object argument, Action<object>[] callbacks, NetworkUser target = null)
         {
             var invokeId = Random.Next(int.MinValue, int.MaxValue);
             var t = new TaskCompletionSource<object>();
@@ -203,7 +206,7 @@ namespace MiniRpcLib
                 var retReceiveType = Functions[guid][funcId].ResponseReceiveType;
                 Log($"AwaitingResponse[invokeId] {retReceiveType}");
                 var result = typeof(NetworkReader) == retReceiveType ? x : x.ReadObject(retReceiveType);
-                foreach(var callback in callbacks)
+                foreach (var callback in callbacks)
                     callback(result);
                 Log($"AwaitingResponse[invokeId] {result}");
             };
@@ -220,14 +223,12 @@ namespace MiniRpcLib
             await t.Task;
         }
 
-        internal static void InvokeAction(string guid, int commandId, object argument, NetworkUser target = null)
+        internal static void InvokeAction(uint guid, int commandId, object argument, NetworkUser target = null)
         {
             var rpc = Actions[guid][commandId];
 
             if (rpc.SendType != argument.GetType())
-                throw new ArgumentException(
-                    $"The passed argument type ({argument.GetType()})is not the correct type ({rpc.SendType}).",
-                    nameof(argument));
+                throw new ArgumentException($"The passed argument type ({argument.GetType()})is not the correct type ({rpc.SendType}).", nameof(argument));
 
             switch (rpc.ExecuteOn)
             {
