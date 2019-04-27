@@ -1,4 +1,6 @@
-using System;
+﻿using System;
+using System.Collections.Generic;
+using IL.RoR2.Projectile;
 using MiniRpcLib.Action;
 using MiniRpcLib.Func;
 using RoR2;
@@ -13,8 +15,10 @@ namespace MiniRpcLib
 
         internal MiniRpcInstance(uint guid) => _guid = guid;
 
-        public IRpcAction<Action<NetworkWriter>> RegisterAction(Target target, Action<NetworkUser, NetworkReader> action)
-            => MiniRpc.RegisterAction<Action<NetworkWriter>, NetworkReader>(_guid, target, action);
+        public IRpcAction<Action<NetworkWriter>> RegisterAction(Target target, Action<NetworkUser, NetworkReader> action) => 
+            MiniRpc.RegisterAction<Action<NetworkWriter>, NetworkReader>(_guid, target, action);
+
+        public IRpcAction<T> RegisterAction<T>(Target target, Action<NetworkUser, T> action) where T : INetworkSerializable => MiniRpc.RegisterAction(_guid, target, action);
 
         #region RegisterAction
         public IRpcAction<Color> RegisterAction(Target target, Action<NetworkUser, Color> action) => MiniRpc.RegisterAction(_guid, target, action);
@@ -48,9 +52,55 @@ namespace MiniRpcLib
         public IRpcAction<ushort> RegisterAction(Target target, Action<NetworkUser, ushort> action) => MiniRpc.RegisterAction(_guid, target, action);
         public IRpcAction<uint> RegisterAction(Target target, Action<NetworkUser, uint> action) => MiniRpc.RegisterAction(_guid, target, action);
         public IRpcAction<ulong> RegisterAction(Target target, Action<NetworkUser, ulong> action) => MiniRpc.RegisterAction(_guid, target, action);
+
         #endregion
 
-        public IRpcFunc<bool, string> RegisterFunc(Target target, Func<NetworkUser, bool, string> action)
-            => MiniRpc.RegisterFunc(_guid, target, action);
+        public IRpcFunc<NetworkReader, Action<NetworkWriter>> RegisterFunc(Target target, Func<NetworkUser, NetworkReader, Action<NetworkWriter>> action) => MiniRpc.RegisterFunc(_guid, target, action);
+
+        public IRpcFunc<TArg, TReturn> RegisterFunc<TArg, TReturn>(Target target, Func<NetworkUser, TArg, TReturn> action)
+        {
+            if (!_typesBase.Contains(typeof(TArg)) && !typeof(INetworkSerializable).IsAssignableFrom(typeof(TArg)))
+                throw new NotSupportedException($"Type {typeof(TArg)} is not a valid argument type.");
+
+            if (!_typesBase.Contains(typeof(TReturn)) && !typeof(INetworkSerializable).IsAssignableFrom(typeof(TReturn)))
+                throw new NotSupportedException($"Type {typeof(TReturn)} is not a valid return value type.");
+
+            return MiniRpc.RegisterFunc(_guid, target, action);
+        }
+
+        private readonly HashSet<Type> _typesBase = new HashSet<Type>()
+        {
+            typeof(Color),
+            typeof(Color32),
+            typeof(GameObject),
+            typeof(Matrix4x4),
+            typeof(NetworkHash128),
+            typeof(NetworkIdentity),
+            typeof(NetworkInstanceId),
+            typeof(NetworkSceneId),
+            typeof(Plane),
+            typeof(Quaternion),
+            typeof(Ray),
+            typeof(Rect),
+            typeof(Transform),
+            typeof(Vector2),
+            typeof(Vector3),
+            typeof(Vector4),
+            typeof(bool),
+            typeof(byte),
+            typeof(byte[]),
+            typeof(char),
+            typeof(decimal),
+            typeof(double),
+            typeof(float),
+            typeof(int),
+            typeof(long),
+            typeof(sbyte),
+            typeof(string),
+            typeof(short),
+            typeof(ushort),
+            typeof(uint),
+            typeof(ulong),
+        };
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.Serialization;
 using UnityEngine;
 using UnityEngine.Networking;
 
@@ -110,6 +111,9 @@ namespace MiniRpcLib.Extensions
                 case Action<NetworkWriter> x:
                     x(writer);
                     break;
+                case INetworkSerializable x:
+                    x.Serialize(writer);
+                    break;
                 default:
                     throw new ArgumentException(
                         $"The argument passed to WriteObject ({obj.GetType()}) is not a type supported by NetworkWriter.",
@@ -158,8 +162,19 @@ namespace MiniRpcLib.Extensions
             };
 
             if (!@switch.ContainsKey(type))
-                throw new ArgumentException(
-                    $"The type ({type}) passed to ReadObject is not a type supported by NetworkReader.", nameof(type));
+            {
+                if (typeof(INetworkSerializable).IsAssignableFrom(type))
+                {
+                    var instance = (INetworkSerializable)FormatterServices.GetUninitializedObject(type);
+                    type.GetConstructor(Type.EmptyTypes)?.Invoke(null);
+
+                    instance.Deserialize(reader);
+                    return instance;
+                }
+
+                throw new ArgumentException($"The type ({type}) passed to ReadObject is not a type supported by NetworkReader.", nameof(type));
+
+            }
 
             return @switch[type]();
         }

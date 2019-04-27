@@ -30,6 +30,9 @@ namespace MiniRpcDemo
         public IRpcFunc<bool, string> ExampleFuncClient { get; set; }
         public IRpcFunc<bool, string> ExampleFuncHost { get; set; }
 
+        // Define two functions of type `ExampleObject Function(ExampleObject);`
+        public IRpcFunc<ExampleObject, ExampleObject> ExampleFuncClientObject { get; set; }
+
         public MiniRpcDemo()
         {
             // Fix the damn in-game console stealing our not-in-game consoles output.
@@ -43,10 +46,8 @@ namespace MiniRpcDemo
             var miniRpc = MiniRpc.CreateInstance(ModGuid);
 
             // Define two commands, both transmitting a single string
-            ExampleCommandHost = miniRpc.RegisterAction(Target.Server,
-                (NetworkUser user, string x) => Debug.Log($"[Host] {user?.userName} sent us: {x}"));
-            ExampleCommandClient = miniRpc.RegisterAction(Target.Client,
-                (NetworkUser user, string x) => Debug.Log($"[Client] Host sent us: {x}"));
+            ExampleCommandHost = miniRpc.RegisterAction(Target.Server, (NetworkUser user, string x) => Debug.Log($"[Host] {user?.userName} sent us: {x}"));
+            ExampleCommandClient = miniRpc.RegisterAction(Target.Client, (NetworkUser user, string x) => Debug.Log($"[Client] Host sent us: {x}"));
 
             // Define two commands, both deserializing the data themselves
 
@@ -72,18 +73,26 @@ namespace MiniRpcDemo
                 Debug.Log($"[Client] Host sent us: {str} {int32}");
             });
 
-            ExampleFuncHost = miniRpc.RegisterFunc(Target.Server, (user, x) =>
+            ExampleFuncHost = miniRpc.RegisterFunc<bool, string>(Target.Server, (user, x) =>
             {
                 Debug.Log($"[Host] {user?.userName} sent us: {x}");
                 return $"Hello from the server, received {x}!";
             });
 
-            ExampleFuncClient = miniRpc.RegisterFunc(Target.Client, (user, x) =>
+            ExampleFuncClient = miniRpc.RegisterFunc<bool, string>(Target.Client, (user, x) =>
             {
                 Debug.Log($"[Client] Host sent us: {x}");
                 return $"Hello from the client, received {x}!";
             });
+
+            ExampleFuncClientObject = miniRpc.RegisterFunc(Target.Client, (NetworkUser user, ExampleObject obj) =>
+            {
+                Debug.Log($"[Client] Host sent us: {obj}");
+                obj.StringExample = "Edited client-side!";
+                return obj;
+            });
         }
+
 
         public async void Update()
         {
@@ -132,6 +141,45 @@ namespace MiniRpcDemo
                     Debug.Log($"[MiniRpcDemo] Received response ExampleFuncClient: {result}");
                 });
             }
+
+            if (Input.GetKeyDown(KeyCode.UpArrow))
+            {
+                Debug.Log("[MiniRpcDemo] Sending request ExampleFuncClientObject.");
+                ExampleFuncClientObject.Invoke(new ExampleObject(true, 28, "Pure"), result =>
+                {
+                    Debug.Log($"[MiniRpcDemo] Received response ExampleFuncClientObject: {result}");
+                });
+            }
         }
+    }
+
+    public class ExampleObject : INetworkSerializable
+    {
+        public bool   BoolExample;
+        public int    IntExample;
+        public string StringExample;
+
+        public ExampleObject(bool boolExample, int intExample, string stringExample)
+        {
+            BoolExample   = boolExample;
+            IntExample    = intExample;
+            StringExample = stringExample;
+        }
+
+        public void Serialize(NetworkWriter writer)
+        {
+            writer.Write(BoolExample);
+            writer.Write(IntExample);
+            writer.Write(StringExample);
+        }
+
+        public void Deserialize(NetworkReader reader)
+        {
+            BoolExample   = reader.ReadBoolean();
+            IntExample    = reader.ReadInt32();
+            StringExample = reader.ReadString();
+        }
+
+        public override string ToString() => $"ExampleObject: {BoolExample}, {IntExample}, {StringExample}";
     }
 }
