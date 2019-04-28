@@ -153,7 +153,7 @@ namespace MiniRpcDemo
         }
     }
 
-    public class ExampleObject : INetworkSerializable
+    public class ExampleObject : MessageBase
     {
         public bool   BoolExample;
         public int    IntExample;
@@ -166,14 +166,14 @@ namespace MiniRpcDemo
             StringExample = stringExample;
         }
 
-        public void Serialize(NetworkWriter writer)
+        public override void Serialize(NetworkWriter writer)
         {
             writer.Write(BoolExample);
             writer.Write(IntExample);
             writer.Write(StringExample);
         }
 
-        public void Deserialize(NetworkReader reader)
+        public override void Deserialize(NetworkReader reader)
         {
             BoolExample   = reader.ReadBoolean();
             IntExample    = reader.ReadInt32();

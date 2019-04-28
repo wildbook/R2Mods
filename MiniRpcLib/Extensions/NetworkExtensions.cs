@@ -111,9 +111,6 @@ namespace MiniRpcLib.Extensions
                 case Action<NetworkWriter> x:
                     x(writer);
                     break;
-                case INetworkSerializable x:
-                    x.Serialize(writer);
-                    break;
                 default:
                     throw new ArgumentException(
                         $"The argument passed to WriteObject ({obj.GetType()}) is not a type supported by NetworkWriter.",
@@ -163,9 +160,9 @@ namespace MiniRpcLib.Extensions
 
             if (!@switch.ContainsKey(type))
             {
-                if (typeof(INetworkSerializable).IsAssignableFrom(type))
+                if (typeof(MessageBase).IsAssignableFrom(type))
                 {
-                    var instance = (INetworkSerializable)FormatterServices.GetUninitializedObject(type);
+                    var instance = (MessageBase)FormatterServices.GetUninitializedObject(type);
                     type.GetConstructor(Type.EmptyTypes)?.Invoke(null);
 
                     instance.Deserialize(reader);
