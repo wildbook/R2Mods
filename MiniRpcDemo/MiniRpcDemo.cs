@@ -73,6 +73,7 @@ namespace MiniRpcDemo
                 Debug.Log($"[Client] Host sent us: {str} {int32}");
             });
 
+            // Here's three examples of RegisterFunc, where you also need to return a value to the caller
             ExampleFuncHost = miniRpc.RegisterFunc<bool, string>(Target.Server, (user, x) =>
             {
                 Debug.Log($"[Host] {user?.userName} sent us: {x}");
@@ -91,8 +92,38 @@ namespace MiniRpcDemo
                 obj.StringExample = "Edited client-side!";
                 return obj;
             });
+
+            // By default, MiniRpcLib will create an ID based on the registration order (first command is ID 0, second command is ID 1, and so on
+            // If you want to specify an ID manually, you can choose to do so by doing either of these:
+            //
+            // RpcActions and RpcFuncs have separate IDs, so both an RpcFunc and an RpcAction can have the same ID without collisions.
+            // That said, there's nothing stopping you from using the same Enum for both, as all ID values are valid.
+            // (1, 2, 3 being Actions, 4 being a Func, 5 being an action again and so on is okay and valid)
+
+            _ = miniRpc.RegisterFunc(Target.Client, (NetworkUser user, ExampleObject obj) =>
+            {
+                Debug.Log($"[Client] Host sent us: {obj}");
+                obj.StringExample = "Edited client-side!";
+                return obj;
+            }, 1234); // <-- Optional ID
+
+            _ = miniRpc.RegisterFunc(Target.Client, (NetworkUser user, ExampleObject obj) =>
+            {
+                Debug.Log($"[Client] Host sent us: {obj}");
+                obj.StringExample = "Edited client-side!";
+                return obj;
+            }, CommandId.SomeCommandName); // <-- Optional ID
+
+            // The "_ ="'s above mean that the return value will be ignored. In your code you should assign the return value to something to be able to call the function.
         }
 
+        // This enum only exists to show that it can be used as ID for an RpcAction/RpcFunc
+        enum CommandId
+        {
+            //                     ----|    This number is only needed because we already created an RpcFunc with ID 0 (the first one we made without an ID).
+            SomeCommandName      = 2345, // If you use IDs in your own code, you will most likely want to give all commands explicit IDs, which will avoid this issue.
+            SomeOtherCommandName,
+        }
 
         public async void Update()
         {
@@ -164,20 +195,6 @@ namespace MiniRpcDemo
             BoolExample   = boolExample;
             IntExample    = intExample;
             StringExample = stringExample;
-        }
-
-        public override void Serialize(NetworkWriter writer)
-        {
-            writer.Write(BoolExample);
-            writer.Write(IntExample);
-            writer.Write(StringExample);
-        }
-
-        public override void Deserialize(NetworkReader reader)
-        {
-            BoolExample   = reader.ReadBoolean();
-            IntExample    = reader.ReadInt32();
-            StringExample = reader.ReadString();
         }
 
         public override string ToString() => $"ExampleObject: {BoolExample}, {IntExample}, {StringExample}";

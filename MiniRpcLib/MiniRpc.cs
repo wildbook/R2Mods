@@ -7,8 +7,10 @@ using MiniRpcLib.Extensions;
 using MiniRpcLib.Func;
 using RoR2;
 using RoR2.Networking;
+using UnityEngine;
 using UnityEngine.Networking;
 using Utilities;
+using Random = System.Random;
 
 namespace MiniRpcLib
 {
@@ -36,9 +38,6 @@ namespace MiniRpcLib
         private static RpcLayer.RpcLayer _layer;
 
         private static readonly Random Random = new Random();
-        private static readonly Logger Logger = new Logger { Tag = "Koi.MiniRpc", Level = LogLevel.Info };
-        private static void Log(string x) => Logger.Log(x);
-        private static void LogError(string x) => Logger.LogError(x);
 
         public static void Initialize(RpcLayer.RpcLayer layer)
         {
@@ -105,8 +104,6 @@ namespace MiniRpcLib
         private static void HandleRpc(Target commandType, NetworkMessage netMsg)
         {
             var hash      = netMsg.reader.ReadUInt32();
-
-            var guid = netMsg.reader.ReadUInt32();
             var commandId = netMsg.reader.ReadInt32();
 
             if (!Actions.TryGetValue(hash, out var actions) || !actions.TryGetValue(commandId, out var action))
@@ -139,38 +136,35 @@ namespace MiniRpcLib
             }
         }
 
-        internal static IRpcAction<T> RegisterAction<T>(uint guid, Target target, Action<NetworkUser, T> action)
-            => RegisterAction<T, T>(guid, target, action);
+        internal static IRpcAction<T> RegisterAction<T>(uint guid, Target target, Action<NetworkUser, T> action, int? id = null)
+            => RegisterAction<T, T>(guid, target, action, id);
 
-        internal static IRpcAction<TSend> RegisterAction<TSend, TReceive>(uint guid, Target target, Action<NetworkUser, TReceive> action)
+        internal static IRpcAction<TSend> RegisterAction<TSend, TReceive>(uint guid, Target target, Action<NetworkUser, TReceive> action, int? id = null)
         {
             var actions = Actions[guid];
-            var id = actions.Count;
+            var intId = id ?? actions.Count;
 
             Logger.Info($"{guid}[{intId}] Registering action | {target}");
             var rpcAction = new RpcAction<TSend, TReceive>(guid, actions.Count, target, action);
 
-            actions.Add(id, rpcAction);
+            actions.Add(intId, rpcAction);
             return rpcAction;
         }
 
         internal static IRpcFunc<TRequest, TResponse> RegisterFunc<TRequest, TResponse>
-            (uint guid, Target target, Func<NetworkUser, TRequest, TResponse> func)
-            => RegisterFunc<TRequest, TRequest, TResponse, TResponse>(guid, target, func);
+            (uint guid, Target target, Func<NetworkUser, TRequest, TResponse> func, int? id = null)
+            => RegisterFunc<TRequest, TRequest, TResponse, TResponse>(guid, target, func, id);
 
-        internal static IRpcFunc<TRequestSend, TResponseReceive> RegisterFunc<TRequestSend, TRequestReceive,
-                TResponseSend, TResponseReceive>
-            (uint guid, Target target, Func<NetworkUser, TRequestReceive, TResponseSend> func)
+        internal static IRpcFunc<TRequestSend, TResponseReceive> RegisterFunc<TRequestSend, TRequestReceive, TResponseSend, TResponseReceive>
+            (uint guid, Target target, Func<NetworkUser, TRequestReceive, TResponseSend> func, int? id = null)
         {
             var functions = Functions[guid];
-            var id = functions.Count;
-
-            Log($"{guid}[{id}] Registering action | {target}");
-            var rpcFunc =
-                new RpcFunc<TRequestSend, TRequestReceive, TResponseSend, TResponseReceive>(guid, id, target, func);
+            var intId = id ?? functions.Count;
 
             Logger.Info($"{guid}[{intId}] Registering action | {target}");
+            var rpcFunc = new RpcFunc<TRequestSend, TRequestReceive, TResponseSend, TResponseReceive>(guid, intId, target, func);
 
+            functions.Add(intId, rpcFunc);
             return rpcFunc;
         }
 
