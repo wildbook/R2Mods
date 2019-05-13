@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -67,11 +67,11 @@ namespace MiniRpcLib
 
         private static void HandleFunctionRequest(IRpcAction<Action<NetworkWriter>> response, NetworkUser nu, NetworkReader reader)
         {
-            Log("HandleFunctionRequest");
+            Logger.Info("HandleFunctionRequest");
             var guid = reader.ReadUInt32();
             var funcId = reader.ReadInt32();
             var invokeId = reader.ReadInt32();
-            Log($"Received function: {guid}[{funcId}] - {invokeId}");
+            Logger.Info($"Received function: {guid}[{funcId}] - {invokeId}");
             var func = Functions[guid][funcId];
             var result = func.Function.Invoke(nu,
                 func.RequestReceiveType == typeof(NetworkReader)
@@ -87,9 +87,9 @@ namespace MiniRpcLib
 
         private static void HandleFunctionResponse(NetworkUser nu, NetworkReader reader)
         {
-            Log("HandleFunctionResponse");
+            Logger.Debug("HandleFunctionResponse");
             var invokeId = reader.ReadInt32();
-            Log($"Received function return: {invokeId}");
+            Logger.Debug($"Received function return: {invokeId}");
             AwaitingResponse[invokeId].Invoke(reader);
         }
 
@@ -111,15 +111,15 @@ namespace MiniRpcLib
 
             if (!Actions.TryGetValue(guid, out var actions) || !actions.TryGetValue(commandId, out var action))
             {
-                LogError($"{commandType} Received unregistered CommandId: {guid}[{commandId}]");
+                Logger.Error($"{commandType} Received unregistered CommandId: {hash}[{commandId}]");
                 return;
             }
 
-            Log($"{commandType} Received command: {guid}[{commandId}]");
+            Logger.Debug($"{Mods[hash]}[{commandId}]");
 
             if (action.ExecuteOn != commandType)
             {
-                LogError($"Can not invoke {commandType} command as {action.ExecuteOn}.");
+                Logger.Error($"Can not invoke {commandType} command as {action.ExecuteOn}.");
                 return;
             }
 
@@ -134,7 +134,7 @@ namespace MiniRpcLib
             }
             catch (Exception e)
             {
-                LogError($"Failed to invoke C2S command: {guid}[{commandId}] | {e}");
+                Logger.Error($"Failed to invoke C2S command: {hash}[{commandId}] | {e}");
                 throw;
             }
         }
@@ -147,7 +147,7 @@ namespace MiniRpcLib
             var actions = Actions[guid];
             var id = actions.Count;
 
-            Log($"{guid}[{id}] Registering action | {target}");
+            Logger.Info($"{guid}[{intId}] Registering action | {target}");
             var rpcAction = new RpcAction<TSend, TReceive>(guid, actions.Count, target, action);
 
             actions.Add(id, rpcAction);
@@ -169,7 +169,7 @@ namespace MiniRpcLib
             var rpcFunc =
                 new RpcFunc<TRequestSend, TRequestReceive, TResponseSend, TResponseReceive>(guid, id, target, func);
 
-            functions.Add(id, rpcFunc);
+            Logger.Info($"{guid}[{intId}] Registering action | {target}");
 
             return rpcFunc;
         }
@@ -204,11 +204,11 @@ namespace MiniRpcLib
                 }
 
                 var retReceiveType = Functions[guid][funcId].ResponseReceiveType;
-                Log($"AwaitingResponse[invokeId] {retReceiveType}");
+                Logger.Info($"AwaitingResponse[invokeId] {retReceiveType}");
                 var result = typeof(NetworkReader) == retReceiveType ? x : x.ReadObject(retReceiveType);
                 foreach (var callback in callbacks)
                     callback(result);
-                Log($"AwaitingResponse[invokeId] {result}");
+                Logger.Info($"AwaitingResponse[invokeId] {result}");
             };
 
 
