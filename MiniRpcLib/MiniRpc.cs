@@ -16,7 +16,7 @@ namespace MiniRpcLib
     {
         private const string FuncChannelGuid = "mrpc_func";
 
-        private static readonly Dictionary<string, uint> Mods = new Dictionary<string, uint>();
+        private static readonly Dictionary<uint, string> Mods = new Dictionary<uint, string>();
 
         private static readonly Dictionary<uint, Dictionary<int, IRpcAction>> Actions =
             new Dictionary<uint, Dictionary<int, IRpcAction>>();
@@ -96,7 +96,7 @@ namespace MiniRpcLib
         public static MiniRpcInstance CreateInstance(string guid)
         {
             var hash = Hash.JenkinsOAAT(guid);
-            Mods.Add(guid, hash);
+            Mods.Add(hash, guid);
             Actions.Add(hash, new Dictionary<int, IRpcAction>());
             Functions.Add(hash, new Dictionary<int, IRpcFunc>());
             return new MiniRpcInstance(hash);
@@ -104,12 +104,12 @@ namespace MiniRpcLib
 
         private static void HandleRpc(Target commandType, NetworkMessage netMsg)
         {
-            Log($"{commandType} Received command.");
+            var hash      = netMsg.reader.ReadUInt32();
 
             var guid = netMsg.reader.ReadUInt32();
             var commandId = netMsg.reader.ReadInt32();
 
-            if (!Actions.TryGetValue(guid, out var actions) || !actions.TryGetValue(commandId, out var action))
+            if (!Actions.TryGetValue(hash, out var actions) || !actions.TryGetValue(commandId, out var action))
             {
                 Logger.Error($"{commandType} Received unregistered CommandId: {hash}[{commandId}]");
                 return;
