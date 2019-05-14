@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 using UnityEngine;
@@ -162,8 +162,17 @@ namespace MiniRpcLib.Extensions
             {
                 if (typeof(MessageBase).IsAssignableFrom(type))
                 {
-                    var instance = (MessageBase)FormatterServices.GetUninitializedObject(type);
-                    type.GetConstructor(Type.EmptyTypes)?.Invoke(null);
+                    MessageBase instance;
+                    var constructor = type.GetConstructor(Type.EmptyTypes);
+
+                    if (constructor != null)
+                    {
+                        instance = (MessageBase)constructor.Invoke(null);
+                    }
+                    else
+                    {
+                        instance = (MessageBase)FormatterServices.GetUninitializedObject(type);
+                    }
 
                     instance.Deserialize(reader);
                     return instance;

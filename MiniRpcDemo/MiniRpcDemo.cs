@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using BepInEx;
 using MiniRpcLib;
 using MiniRpcLib.Action;
@@ -190,6 +190,21 @@ namespace MiniRpcDemo
         public int    IntExample;
         public string StringExample;
 
+        public override void Serialize(NetworkWriter writer)
+        {
+            Debug.LogWarning("Serialize.");
+            writer.Write(BoolExample);
+            writer.Write(IntExample);
+            writer.Write(StringExample);
+        }
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            Debug.LogWarning("Deserialize.");
+            BoolExample   = reader.ReadBoolean();
+            IntExample    = reader.ReadInt32();
+            StringExample = reader.ReadString();
+        }
         public ExampleObject(bool boolExample, int intExample, string stringExample)
         {
             BoolExample   = boolExample;
