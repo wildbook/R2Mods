@@ -12,9 +12,9 @@ namespace Multitudes
     [BepInPlugin("dev.wildbook.multitudes", "Multitudes", "1.3.0")]
     public class Multitudes : BaseUnityPlugin
     {
-        private static ConfigWrapper<int> MultiplierConfig { get; set; }
+        private static ConfigWrapper<float> MultiplierConfig { get; set; }
 
-        public int Multiplier
+        public float Multiplier
         {
             get => MultiplierConfig.Value * (enabled ? 1 : 0);
             protected set => MultiplierConfig.Value = value;
@@ -22,10 +22,10 @@ namespace Multitudes
 
         public void Awake()
         {
-            MultiplierConfig = Config.Wrap(
+            MultiplierConfig = Config.Wrap<float>(
                 "Game",
                 "Multiplier",
-                "Sets the multiplier for Multitudes.",
+                "Sets the multiplier for Multitudes. Rounds number of players * multipler down to nearest integer.",
                 4);
 
             On.RoR2.Console.Awake += (orig, self) =>
@@ -38,15 +38,16 @@ namespace Multitudes
             {
                 var c = new ILCursor(il);
                 c.GotoNext(x => x.MatchCallvirt<Run>("set_livingPlayerCount"));
-                c.EmitDelegate<Func<int, int>>(x => x * Multiplier);
+                c.EmitDelegate<Func<int, int>>(x => (int)(x * Multiplier));
 
                 c.GotoNext(x => x.MatchCallvirt<Run>("set_participatingPlayerCount"));
-                c.EmitDelegate<Func<int, int>>(x => x * Multiplier);
+                c.EmitDelegate<Func<int, int>>(x => (int)(x * Multiplier));
             };
 
             Run.onRunStartGlobal += run => { SendMultiplierChat(); };
 
-            On.RoR2.TeleporterInteraction.GetPlayerCountInRadius += (orig, self) => orig(self) * Multiplier;
+            // Round up players * multiplier for teleporter counter to prevent extra slow charging
+            On.RoR2.TeleporterInteraction.GetPlayerCountInRadius += (orig, self) => Mathf.CeilToInt(orig(self) * Multiplier);
         }
 
         // Random example command to set multiplier with
@@ -55,7 +56,7 @@ namespace Multitudes
         {
             args.CheckArgumentCount(1);
 
-            if (!int.TryParse(args[0], out var multiplier))
+            if (!float.TryParse(args[0], out var multiplier))
             {
                 Debug.Log("Invalid argument.");
             }
