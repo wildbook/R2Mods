@@ -66,11 +66,11 @@ namespace MiniRpcLib
 
         private static void HandleFunctionRequest(IRpcAction<Action<NetworkWriter>> response, NetworkUser nu, NetworkReader reader)
         {
-            Logger.Info("HandleFunctionRequest");
+            //Logger.Info("HandleFunctionRequest");
             var guid = reader.ReadUInt32();
             var funcId = reader.ReadInt32();
             var invokeId = reader.ReadInt32();
-            Logger.Info($"Received function: {guid}[{funcId}] - {invokeId}");
+            //Logger.Info($"Received function: {guid}[{funcId}] - {invokeId}");
             var func = Functions[guid][funcId];
             var result = func.Function.Invoke(nu,
                 func.RequestReceiveType == typeof(NetworkReader)
@@ -86,9 +86,9 @@ namespace MiniRpcLib
 
         private static void HandleFunctionResponse(NetworkUser nu, NetworkReader reader)
         {
-            Logger.Debug("HandleFunctionResponse");
+            //Logger.Debug("HandleFunctionResponse");
             var invokeId = reader.ReadInt32();
-            Logger.Debug($"Received function return: {invokeId}");
+            //Logger.Debug($"Received function return: {invokeId}");
             AwaitingResponse[invokeId].Invoke(reader);
         }
 
@@ -112,7 +112,7 @@ namespace MiniRpcLib
                 return;
             }
 
-            Logger.Debug($"{Mods[hash]}[{commandId}]");
+            //Logger.Debug($"{Mods[hash]}[{commandId}]");
 
             if (action.ExecuteOn != commandType)
             {
@@ -144,7 +144,7 @@ namespace MiniRpcLib
             var actions = Actions[guid];
             var intId = id ?? actions.Count;
 
-            Logger.Info($"{guid}[{intId}] Registering action | {target}");
+            //Logger.Info($"{guid}[{intId}] Registering action | {target}");
             var rpcAction = new RpcAction<TSend, TReceive>(guid, actions.Count, target, action);
 
             actions.Add(intId, rpcAction);
@@ -161,7 +161,7 @@ namespace MiniRpcLib
             var functions = Functions[guid];
             var intId = id ?? functions.Count;
 
-            Logger.Info($"{guid}[{intId}] Registering action | {target}");
+            //Logger.Info($"{guid}[{intId}] Registering action | {target}");
             var rpcFunc = new RpcFunc<TRequestSend, TRequestReceive, TResponseSend, TResponseReceive>(guid, intId, target, func);
 
             functions.Add(intId, rpcFunc);
@@ -198,11 +198,11 @@ namespace MiniRpcLib
                 }
 
                 var retReceiveType = Functions[guid][funcId].ResponseReceiveType;
-                Logger.Info($"AwaitingResponse[invokeId] {retReceiveType}");
+                //Logger.Info($"AwaitingResponse[invokeId] {retReceiveType}");
                 var result = typeof(NetworkReader) == retReceiveType ? x : x.ReadObject(retReceiveType);
                 foreach (var callback in callbacks)
                     callback(result);
-                Logger.Info($"AwaitingResponse[invokeId] {result}");
+                //Logger.Info($"AwaitingResponse[invokeId] {result}");
             };
 
 
