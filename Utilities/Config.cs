@@ -3,9 +3,9 @@ using System.Linq;
 using BepInEx.Configuration;
 using TinyJson;
 
-namespace Utilities
+namespace Wildbook.R2Mods.Utilities
 {
-    public class ConfigWrapperJson<T>
+    internal class ConfigWrapperJson<T>
     {
         private readonly ConfigWrapper<string> _wrapper;
 
@@ -31,7 +31,7 @@ namespace Utilities
             _wrapper = configFile.Wrap(definition, defaultValue.ToJson());
     }
 
-    public static class ConfigExtensions
+    internal static class ConfigExtensions
     {
         public static ConfigWrapperJson<T> WrapJson<T>(this ConfigFile file, string section, string key, string description = null, T defaultValue = default)
         {

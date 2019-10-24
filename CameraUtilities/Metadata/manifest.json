@@ -4,6 +4,7 @@
   "website_url": "https://github.com/wildbook/R2Mods/tree/master/CameraUtilities",
   "description": "Ever wanted to change your mouse sensitivity when sprinting?",
   "dependencies": [
-    "bbepis-BepInExPack-1.3.1"
+    "bbepis-BepInExPack-2.0.0",
+    "tristanmcpherson-R2API-2.2.32"
   ]
 }

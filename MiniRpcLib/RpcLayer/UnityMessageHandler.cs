@@ -4,6 +4,7 @@ using MiniRpcLib.Extensions;
 using RoR2;
 using RoR2.Networking;
 using UnityEngine.Networking;
+using R2API.Utils;
 
 namespace MiniRpcLib.RpcLayer
 {

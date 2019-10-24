@@ -30,7 +30,7 @@ namespace Multitudes
 
             On.RoR2.Console.Awake += (orig, self) =>
             {
-                CommandHelper.RegisterCommands(self);
+                R2API.Utils.CommandHelper.RegisterCommands(self);
                 orig(self);
             };
 

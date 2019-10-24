@@ -5,9 +5,9 @@ using System.Threading.Tasks;
 using MiniRpcLib.Action;
 using MiniRpcLib.Extensions;
 using MiniRpcLib.Func;
+using R2API.Utils;
 using RoR2;
 using RoR2.Networking;
-using UnityEngine;
 using UnityEngine.Networking;
 using Utilities;
 using Random = System.Random;
@@ -51,7 +51,7 @@ namespace MiniRpcLib
                 _layer.Initialize();
             };
 
-            Reflection.InvokeMethod<NetworkMessageHandlerAttribute>("CollectHandlers");
+            Reflection.InvokeMethod(typeof(NetworkMessageHandlerAttribute), "CollectHandlers");
 
             var instance = CreateInstance(FuncChannelGuid);
 

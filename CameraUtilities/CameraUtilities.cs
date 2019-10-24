@@ -1,6 +1,6 @@
 ﻿using BepInEx;
 using MonoMod.Cil;
-using Utilities;
+using Wildbook.R2Mods.Utilities;
 
 namespace CameraUtilities
 {

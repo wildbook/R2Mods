@@ -1,5 +1,6 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
+using R2API.Utils;
 using RoR2;
 
 namespace TooManyFriends
@@ -21,9 +22,9 @@ namespace TooManyFriends
         public TooManyFriends()
         {
             _default = (
-                Reflection.GetFieldValue<RoR2Application, int>("maxPlayers"),
-                Reflection.GetFieldValue<RoR2Application, int>("hardMaxPlayers"),
-                Reflection.GetFieldValue<RoR2Application, int>("maxLocalPlayers")
+                Reflection.GetFieldValue<int>(typeof(RoR2Application), "maxPlayers"),
+                Reflection.GetFieldValue<int>(typeof(RoR2Application), "hardMaxPlayers"),
+                Reflection.GetFieldValue<int>(typeof(RoR2Application), "maxLocalPlayers")
             );
 
             LobbySizeConfig = Config.Wrap(
@@ -41,9 +42,9 @@ namespace TooManyFriends
 
         public void SetLobbySize(int maxPlayers, int? hardMaxPlayers = null, int? maxLocalPlayers = null)
         {
-            Reflection.SetFieldValue<RoR2Application>("maxPlayers",      maxPlayers);
-            Reflection.SetFieldValue<RoR2Application>("hardMaxPlayers",  hardMaxPlayers  ?? maxPlayers);
-            Reflection.SetFieldValue<RoR2Application>("maxLocalPlayers", maxLocalPlayers ?? maxPlayers);
+            Reflection.SetFieldValue(typeof(RoR2Application), "maxPlayers",      maxPlayers);
+            Reflection.SetFieldValue(typeof(RoR2Application), "hardMaxPlayers",  hardMaxPlayers  ?? maxPlayers);
+            Reflection.SetFieldValue(typeof(RoR2Application), "maxLocalPlayers", maxLocalPlayers ?? maxPlayers);
         }
     }
 }
