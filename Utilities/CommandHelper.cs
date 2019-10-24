@@ -4,7 +4,7 @@ using System.Linq;
 using System.Reflection;
 using RoR2;
 
-public class CommandHelper
+internal class CommandHelper
 {
     public static void RegisterCommands(RoR2.Console self)
     {
