@@ -77,7 +77,7 @@ namespace Multitudes
             Chat.SendBroadcastChat(
                 new Chat.SimpleChatMessage
                 {
-                    baseToken = "<color=lightblue>Multitudes set to: </color> {0}",
+                    baseToken = "Multitudes set to: {0}",
                     paramTokens = new[]
                     {
                         MultiplierConfig.Value.ToString()
