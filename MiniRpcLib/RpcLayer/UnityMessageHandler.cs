@@ -30,8 +30,8 @@ namespace MiniRpcLib.RpcLayer
             var serverRpcHandler = new NetworkMessageHandlerAttribute { server = true, msgType = MessageTypeC2S };
             var clientRpcHandler = new NetworkMessageHandlerAttribute { client = true, msgType = MessageTypeS2C };
 
-            var delegateC2S = Delegate.CreateDelegate(typeof(NetworkMessageDelegate), MethodHelper.GetMethodInfo<Action<NetworkMessage>>(HandleC2S));
-            var delegateS2C = Delegate.CreateDelegate(typeof(NetworkMessageDelegate), MethodHelper.GetMethodInfo<Action<NetworkMessage>>(HandleS2C));
+            var delegateC2S = (NetworkMessageDelegate)Delegate.CreateDelegate(typeof(NetworkMessageDelegate), MethodHelper.GetMethodInfo<Action<NetworkMessage>>(HandleC2S));
+            var delegateS2C = (NetworkMessageDelegate)Delegate.CreateDelegate(typeof(NetworkMessageDelegate), MethodHelper.GetMethodInfo<Action<NetworkMessage>>(HandleS2C));
 
             serverRpcHandler.SetFieldValue("messageHandler", delegateC2S);
             clientRpcHandler.SetFieldValue("messageHandler", delegateS2C);
