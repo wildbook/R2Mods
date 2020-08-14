@@ -15,8 +15,6 @@ namespace MiniRpcLib
 
         public MiniRpcPlugin()
         {
-            On.RoR2.RoR2Application.UnitySystemConsoleRedirector.Redirect += orig => { };
-
             Logger.LogInfo("Initializing Logger");
             InitLogger();
 

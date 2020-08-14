@@ -35,10 +35,6 @@ namespace MiniRpcDemo
 
         public MiniRpcDemo()
         {
-            // Fix the damn in-game console stealing our not-in-game consoles output.
-            // Not related to the demo, just very useful.
-            On.RoR2.RoR2Application.UnitySystemConsoleRedirector.Redirect += orig => { };
-
             // Create a MiniRpcInstance that automatically registers all commands to our ModGuid
             // This lets us support multiple mods using the same command ID
             // We could also just generate new command ID's without "isolating" them by mod as well, so it would break if mod load order was different for different clients
