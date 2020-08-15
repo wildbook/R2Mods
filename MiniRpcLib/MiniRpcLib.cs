@@ -11,7 +11,7 @@ namespace MiniRpcLib
 
         private const string ModVer = "1.0";
         private const string ModName = "MiniRpcLib";
-        private const string ModGuid = "dev.wildbook.lib-minirpc";
+        private const string ModGuid = "dev.wildbook.libminirpc";
 
         public MiniRpcPlugin()
         {
