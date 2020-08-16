@@ -11,12 +11,10 @@ namespace MiniRpcLib
 
         private const string ModVer = "1.0";
         private const string ModName = "MiniRpcLib";
-        private const string ModGuid = "dev.wildbook.lib-minirpc";
+        private const string ModGuid = "dev.wildbook.libminirpc";
 
         public MiniRpcPlugin()
         {
-            On.RoR2.RoR2Application.UnitySystemConsoleRedirector.Redirect += orig => { };
-
             Logger.LogInfo("Initializing Logger");
             InitLogger();
 
