@@ -11,6 +11,7 @@ namespace Multitudes
     [BepInDependency("com.bepis.r2api")]
     [BepInPlugin("dev.wildbook.multitudes", "Multitudes", "1.5.0")]
     [R2APISubmoduleDependency(nameof(CommandHelper))]
+    [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     public class Multitudes : BaseUnityPlugin
     {
         private static ConfigEntry<int> MultiplierConfig { get; set; }
