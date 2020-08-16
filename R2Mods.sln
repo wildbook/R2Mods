@@ -16,7 +16,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CameraUtilities", "CameraUt
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		Utilities\Utilities.projitems*{0d465267-7a1c-4ad0-85dd-40349844ede8}*SharedItemsImports = 5
+		Utilities\Utilities.projitems*{5e490e0b-4282-452d-ac5b-9cb749de5138}*SharedItemsImports = 5
 		Utilities\Utilities.projitems*{6189bde4-e024-4872-b6c3-b5ca2c4fcde5}*SharedItemsImports = 13
+		Utilities\Utilities.projitems*{736c5b51-b1ea-43c1-9696-6535715aeb75}*SharedItemsImports = 5
+		Utilities\Utilities.projitems*{78f8d7db-d776-403a-9d03-03325c741e70}*SharedItemsImports = 5
 	EndGlobalSection
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

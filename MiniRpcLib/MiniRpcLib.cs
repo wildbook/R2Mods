@@ -9,7 +9,7 @@ namespace MiniRpcLib
     {
         public const string Dependency = ModGuid;
 
-        private const string ModVer = "1.0";
+        private const string ModVer = "1.1";
         private const string ModName = "MiniRpcLib";
         private const string ModGuid = "dev.wildbook.libminirpc";
 
