@@ -33,7 +33,7 @@ namespace TooManyFriends
                 RoR2Application.maxLocalPlayers
             );
 
-            LobbySizeConfig = Config.Bind("Game", "LobbySize", 4, "Sets the max size of custom game lobbies");
+            LobbySizeConfig = Config.Bind("Game", "LobbySize", 16, "Sets the max size of custom game lobbies");
 
             LobbySizeConfig.SettingChanged += (sender, args) => SetLobbySize(LobbySize);
         }
