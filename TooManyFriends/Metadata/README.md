@@ -13,6 +13,11 @@ Default is 16 players.
 ----
 **Changenotes**
 
+v1.1.0
+
+  - Update for RoR2 1.0 Release.
+  - Add a console command called `mod_tmf` that allows you to change the lobby size. Usage: `mod_tmf 32`
+
 v1.0.0
 
   - Initial release

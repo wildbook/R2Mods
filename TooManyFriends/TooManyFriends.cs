@@ -2,16 +2,20 @@
 using BepInEx.Configuration;
 using R2API.Utils;
 using RoR2;
+using RoR2.Networking;
+using UnityEngine;
 
 namespace TooManyFriends
 {
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("dev.wildbook.toomanyfriends", "TooManyFriends", "1.0")]
+    [BepInPlugin("dev.wildbook.toomanyfriends", "TooManyFriends", "1.1.0")]
+    [R2APISubmoduleDependency(nameof(CommandHelper))]
+    [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     public class TooManyFriends : BaseUnityPlugin
     {
         private static (int maxPlayers, int hardMaxPlayers, int maxLocalPlayers) _default;
 
-        private static ConfigWrapper<int> LobbySizeConfig { get; set; }
+        private static ConfigEntry<int> LobbySizeConfig { get; set; }
 
         public static int LobbySize
         {
@@ -21,17 +25,15 @@ namespace TooManyFriends
 
         public TooManyFriends()
         {
+            CommandHelper.AddToConsoleWhenReady();
+
             _default = (
-                Reflection.GetFieldValue<int>(typeof(RoR2Application), "maxPlayers"),
-                Reflection.GetFieldValue<int>(typeof(RoR2Application), "hardMaxPlayers"),
-                Reflection.GetFieldValue<int>(typeof(RoR2Application), "maxLocalPlayers")
+                RoR2Application.maxPlayers,
+                RoR2Application.hardMaxPlayers,
+                RoR2Application.maxLocalPlayers
             );
 
-            LobbySizeConfig = Config.Wrap(
-                "Game",
-                "LobbySize",
-                "Sets the max size of custom game lobbies.",
-                16);
+            LobbySizeConfig = Config.Bind("Game", "LobbySize", 16, "Sets the max size of custom game lobbies");
 
             LobbySizeConfig.SettingChanged += (sender, args) => SetLobbySize(LobbySize);
         }
@@ -42,9 +44,28 @@ namespace TooManyFriends
 
         public void SetLobbySize(int maxPlayers, int? hardMaxPlayers = null, int? maxLocalPlayers = null)
         {
-            Reflection.SetFieldValue(typeof(RoR2Application), "maxPlayers",      maxPlayers);
-            Reflection.SetFieldValue(typeof(RoR2Application), "hardMaxPlayers",  hardMaxPlayers  ?? maxPlayers);
-            Reflection.SetFieldValue(typeof(RoR2Application), "maxLocalPlayers", maxLocalPlayers ?? maxPlayers);
+            typeof(RoR2Application).SetFieldValue("maxPlayers",      maxPlayers);
+            typeof(RoR2Application).SetFieldValue("hardMaxPlayers",  hardMaxPlayers  ?? maxPlayers);
+            typeof(RoR2Application).SetFieldValue("maxLocalPlayers", maxLocalPlayers ?? maxPlayers);
+            SteamworksLobbyManager.cvSteamLobbyMaxMembers.defaultValue = maxPlayers.ToString();
+            SteamworksLobbyManager.cvSteamLobbyMaxMembers.SetPropertyValue("value", maxPlayers);
+            GameNetworkManager.SvMaxPlayersConVar.instance.SetString(maxPlayers.ToString());
+        }
+
+        [ConCommand(commandName = "mod_tmf", flags = ConVarFlags.None, helpText = "Lets you change the max size of custom game lobbies.")]
+        private static void CCSetMaxLobbySize(ConCommandArgs args)
+        {
+            args.CheckArgumentCount(1);
+ 
+            if (!int.TryParse(args[0], out var lobbySize))
+            {
+                Debug.Log("Invalid argument.");
+            }
+            else
+            {
+                LobbySizeConfig.Value = lobbySize;
+                Debug.Log($"Lobby max size set to {LobbySizeConfig.Value}.");
+            }
         }
     }
 }

@@ -1,5 +1,7 @@
-﻿using BepInEx;
+﻿using System;
+using BepInEx;
 using BepInEx.Configuration;
+using MonoMod.Cil;
 using MonoMod.RuntimeDetour;
 using R2API.Utils;
 using RoR2;
@@ -9,7 +11,7 @@ using UnityEngine.Networking;
 namespace Multitudes
 {
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("dev.wildbook.multitudes", "Multitudes", "1.5.0")]
+    [BepInPlugin("dev.wildbook.multitudes", "Multitudes", "1.5.1")]
     [R2APISubmoduleDependency(nameof(CommandHelper))]
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     public class Multitudes : BaseUnityPlugin
@@ -53,12 +55,27 @@ namespace Multitudes
             origParticipatingPlayerCountGetter = getParticipatingPlayerCount.GenerateTrampoline<RunInstanceReturnInt>();
  
             Run.onRunStartGlobal += run => { SendMultiplierChat(); };
- 
-
+            
             On.RoR2.HoldoutZoneController.CountPlayersInRadius += (orig, origin, chargingRadiusSqr, teamIndex) =>
                 orig(origin, chargingRadiusSqr, teamIndex) * (ShouldAffectTeleporterChargeRateConfig.Value ? Multiplier : 1);
+
+            IL.RoR2.AllPlayersTrigger.UpdateActivated += FixFinalBossZoneFailingToTrigger;
         }
- 
+
+        private void FixFinalBossZoneFailingToTrigger(ILContext il)
+        {
+            var c = new ILCursor(il);
+            if (c.TryGotoNext(MoveType.After,
+                i => i.MatchCallOrCallvirt<Run>("get_livingPlayerCount")))
+            {
+                c.EmitDelegate<Func<int, int>>(livingPlayerCount => livingPlayerCount / Multiplier);
+            }
+            else
+            {
+                Logger.LogError("Failed hooking AllPlayersTrigger.UpdateActivated. Aborting.");
+            }
+        }
+
         private static int GetLivingPlayerCountHook(Run self) => origLivingPlayerCountGetter(self) * Multiplier;
         private static int GetParticipatingPlayerCountHook(Run self) => origParticipatingPlayerCountGetter(self) * Multiplier;
  

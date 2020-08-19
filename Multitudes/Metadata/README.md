@@ -17,6 +17,10 @@ Enemies stop spawning at around 140 effective players, meaning 1x150, 3x50, and 
 ----
 **Changenotes**
 
+v1.5.1
+
+  - Fix a bug where the final boss zone was not triggering properly upon entering.
+
 v1.5.0
 
   - Updated for RoR2 1.0
