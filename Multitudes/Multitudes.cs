@@ -11,7 +11,7 @@ using UnityEngine.Networking;
 namespace Multitudes
 {
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("dev.wildbook.multitudes", "Multitudes", "1.5.2")]
+    [BepInPlugin("dev.wildbook.multitudes", "Multitudes", "1.5.3")]
     [R2APISubmoduleDependency(nameof(CommandHelper))]
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     public class Multitudes : BaseUnityPlugin
@@ -60,6 +60,7 @@ namespace Multitudes
                 orig(origin, chargingRadiusSqr, teamIndex) * (ShouldAffectTeleporterChargeRateConfig.Value ? Multiplier : 1);
 
             IL.RoR2.AllPlayersTrigger.FixedUpdate += FixFinalBossZoneFailingToTrigger;
+            IL.RoR2.MultiBodyTrigger.FixedUpdate += FixFinalZoneFailingToTrigger;
         }
 
         private void FixFinalBossZoneFailingToTrigger(ILContext il)
@@ -73,6 +74,20 @@ namespace Multitudes
             else
             {
                 Logger.LogError("Failed hooking AllPlayersTrigger.UpdateActivated. Aborting.");
+            }
+        }
+
+        private void FixFinalZoneFailingToTrigger(ILContext il)
+        {
+            var c = new ILCursor(il);
+            if (c.TryGotoNext(MoveType.After,
+                i => i.MatchCallOrCallvirt<Run>("get_livingPlayerCount")))
+            {
+                c.EmitDelegate<Func<int, int>>(livingPlayerCount => livingPlayerCount / Multiplier);
+            }
+            else
+            {
+                Logger.LogError("Failed hooking MultiBodyTrigger.UpdateActivated. Aborting.");
             }
         }
 
