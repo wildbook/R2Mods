@@ -1,0 +1,10 @@
+{
+    "name": "MiniRpcLib",
+    "version_number": "0.0.3",
+    "website_url": "https://github.com/wildbook/R2Mods/tree/develop/MiniRpcLib",
+    "description": "A relatively simple networking library.",
+    "dependencies": [
+        "bbepis-BepInExPack-5.4.1902",
+        "tristanmcpherson-R2API-4.0.11"
+    ]
+}
