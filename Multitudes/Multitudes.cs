@@ -7,7 +7,7 @@ using R2API.Utils;
 using RoR2;
 using UnityEngine;
 using UnityEngine.Networking;
- 
+
 namespace Multitudes
 {
     [BepInDependency("com.bepis.r2api")]
@@ -56,8 +56,8 @@ namespace Multitudes
  
             Run.onRunStartGlobal += run => { SendMultiplierChat(); };
             
-            On.RoR2.HoldoutZoneController.CountPlayersInRadius += (orig, origin, chargingRadiusSqr, teamIndex) =>
-                orig(origin, chargingRadiusSqr, teamIndex) * (ShouldAffectTeleporterChargeRateConfig.Value ? Multiplier : 1);
+            On.RoR2.HoldoutZoneController.CountPlayersInRadius += (orig, c, origin, chargingRadiusSqr, teamIndex) =>
+                orig(c, origin, chargingRadiusSqr, teamIndex) * (ShouldAffectTeleporterChargeRateConfig.Value ? Multiplier : 1);
 
             IL.RoR2.AllPlayersTrigger.FixedUpdate += FixFinalBossZoneFailingToTrigger;
         }
