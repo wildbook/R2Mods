@@ -128,15 +128,15 @@ namespace Multitudes
         private static void CCSetMultiplierAffectTeleporterChargeRate(ConCommandArgs args)
         {
             args.CheckArgumentCount(1);
- 
-            if (!bool.TryParse(args[0], out var shouldAffectTeleporterChargeRate))
-            {
-                Debug.Log("Invalid argument. Correct usage is either : mod_wb_set_teleporter_rate true / mod_wb_set_teleporter_rate false");
-            }
-            else
+
+            if (bool.TryParse(args[0], out var shouldAffectTeleporterChargeRate))
             {
                 ShouldAffectTeleporterChargeRateConfig.Value = shouldAffectTeleporterChargeRate;
                 Debug.Log($"Should Affect Teleporter Charge Rate set to {ShouldAffectTeleporterChargeRateConfig.Value}.");
+            }
+            else
+            {
+                Debug.Log("Invalid argument. Correct usage is either : mod_wb_set_teleporter_rate true / mod_wb_set_teleporter_rate false");
             }
         }
     }

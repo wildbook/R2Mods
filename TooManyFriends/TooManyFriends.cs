@@ -34,7 +34,6 @@ namespace TooManyFriends
             );
 
             LobbySizeConfig = Config.Bind("Game", "LobbySize", 16, "Sets the max size of custom game lobbies");
-
             LobbySizeConfig.SettingChanged += (sender, args) => SetLobbySize(LobbySize);
         }
 
@@ -44,28 +43,28 @@ namespace TooManyFriends
 
         public void SetLobbySize(int maxPlayers, int? hardMaxPlayers = null, int? maxLocalPlayers = null)
         {
-            typeof(RoR2Application).SetFieldValue("maxPlayers",      maxPlayers);
-            typeof(RoR2Application).SetFieldValue("hardMaxPlayers",  hardMaxPlayers  ?? maxPlayers);
-            typeof(RoR2Application).SetFieldValue("maxLocalPlayers", maxLocalPlayers ?? maxPlayers);
-            SteamworksLobbyManager.cvSteamLobbyMaxMembers.defaultValue = maxPlayers.ToString();
-            SteamworksLobbyManager.cvSteamLobbyMaxMembers.SetPropertyValue("value", maxPlayers);
-            GameNetworkManager.SvMaxPlayersConVar.instance.SetString(maxPlayers.ToString());
+            RoR2Application.maxPlayers      = maxPlayers;
+            RoR2Application.hardMaxPlayers  = hardMaxPlayers  ?? maxPlayers;
+            RoR2Application.maxLocalPlayers = maxLocalPlayers ?? maxPlayers;
+
+            LobbyManager.cvSteamLobbyMaxMembers.defaultValue = maxPlayers.ToString();
+            LobbyManager.cvSteamLobbyMaxMembers.SetPropertyValue("value", maxPlayers);
+
+            NetworkManagerSystem.SvMaxPlayersConVar.instance.SetString(maxPlayers.ToString());
         }
 
         [ConCommand(commandName = "mod_tmf", flags = ConVarFlags.None, helpText = "Lets you change the max size of custom game lobbies.")]
         private static void CCSetMaxLobbySize(ConCommandArgs args)
         {
             args.CheckArgumentCount(1);
- 
-            if (!int.TryParse(args[0], out var lobbySize))
-            {
-                Debug.Log("Invalid argument.");
-            }
-            else
+
+            if (int.TryParse(args[0], out var lobbySize))
             {
                 LobbySizeConfig.Value = lobbySize;
                 Debug.Log($"Lobby max size set to {LobbySizeConfig.Value}.");
             }
+            else
+                Debug.Log("Invalid argument.");
         }
     }
 }
