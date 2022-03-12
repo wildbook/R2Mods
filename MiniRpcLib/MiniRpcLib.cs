@@ -1,4 +1,5 @@
 ﻿using BepInEx;
+using HarmonyLib;
 using MiniRpcLib.RpcLayer;
 
 namespace MiniRpcLib
@@ -7,6 +8,8 @@ namespace MiniRpcLib
     [BepInPlugin(ModGuid, ModName, ModVer)]
     public class MiniRpcPlugin : BaseUnityPlugin
     {
+        internal Harmony harmony = new Harmony("dev.wildbook.minirpcplugin");
+
         public const string Dependency = ModGuid;
 
         private const string ModVer = "1.1";
@@ -17,10 +20,15 @@ namespace MiniRpcLib
         {
             Logger.LogInfo("Initializing Logger");
             InitLogger();
-
-            Logger.LogInfo("Initializing MiniRpc");
-            MiniRpc.Initialize(new UnityMessageHandler());
         }
+
+        public void Awake()
+        {
+            Logger.LogInfo("Initializing MiniRpc");
+            MiniRpc.Initialize(harmony, new UnityMessageHandler());
+        }
+
+        public void OnDestroy() => harmony.UnpatchSelf();
 
         public void InitLogger()
         {

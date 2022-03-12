@@ -1,8 +1,10 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection.Emit;
 using BepInEx;
 using BepInEx.Configuration;
-using MonoMod.Cil;
-using MonoMod.RuntimeDetour;
+using HarmonyLib;
 using R2API.Utils;
 using RoR2;
 using UnityEngine;
@@ -16,13 +18,10 @@ namespace Multitudes
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     public class Multitudes : BaseUnityPlugin
     {
-        private static ConfigEntry<int> MultiplierConfig { get; set; }
-        private static ConfigEntry<bool> ShouldAffectTeleporterChargeRateConfig { get; set; }
- 
-        private delegate int RunInstanceReturnInt(Run self);
- 
-        private static RunInstanceReturnInt origLivingPlayerCountGetter;
-        private static RunInstanceReturnInt origParticipatingPlayerCountGetter;
+        internal Harmony harmony = new Harmony("dev.wildbook.multitudes");
+
+        public static ConfigEntry<int> MultiplierConfig { get; set; }
+        public static ConfigEntry<bool> ShouldAffectTeleporterChargeRateConfig { get; set; }
  
         public static int Multiplier
         {
@@ -46,56 +45,47 @@ namespace Multitudes
  
             CommandHelper.AddToConsoleWhenReady();
  
-            var getLivingPlayerCountHook = new Hook(typeof(Run).GetMethodCached("get_livingPlayerCount"),
-                typeof(Multitudes).GetMethodCached(nameof(GetLivingPlayerCountHook)));
-            origLivingPlayerCountGetter = getLivingPlayerCountHook.GenerateTrampoline<RunInstanceReturnInt>();
- 
-            var getParticipatingPlayerCount = new Hook(typeof(Run).GetMethodCached("get_participatingPlayerCount"),
-                typeof(Multitudes).GetMethodCached(nameof(GetParticipatingPlayerCountHook)));
-            origParticipatingPlayerCountGetter = getParticipatingPlayerCount.GenerateTrampoline<RunInstanceReturnInt>();
- 
             Run.onRunStartGlobal += run => { SendMultiplierChat(); };
-            
-            On.RoR2.HoldoutZoneController.CountPlayersInRadius += (orig, c, origin, chargingRadiusSqr, teamIndex) =>
-                orig(c, origin, chargingRadiusSqr, teamIndex) * (ShouldAffectTeleporterChargeRateConfig.Value ? Multiplier : 1);
 
-            IL.RoR2.AllPlayersTrigger.FixedUpdate += FixFinalBossZoneFailingToTrigger;
-            IL.RoR2.MultiBodyTrigger.FixedUpdate += FixFinalZoneFailingToTrigger;
+            harmony.PatchAll(typeof(Multitudes));
         }
 
-        private void FixFinalBossZoneFailingToTrigger(ILContext il)
+        public void OnDestroy() => harmony.UnpatchSelf();
+
+        [HarmonyPatch(typeof(Run), nameof(Run.livingPlayerCount), MethodType.Getter)]
+        [HarmonyPatch(typeof(Run), nameof(Run.participatingPlayerCount), MethodType.Getter)]
+        [HarmonyPostfix]
+        public static int AdjustPlayerCount(int playerCount) => playerCount * Multiplier;
+        public static int UnadjustPlayerCount(int adjustedPlayerCount) => adjustedPlayerCount / Multiplier;
+
+        [HarmonyPatch(typeof(HoldoutZoneController), nameof(HoldoutZoneController.CountPlayersInRadius))]
+        [HarmonyPostfix]
+        public static int AdjustTeleporterChargeRate(int chargeRate) =>
+            ShouldAffectTeleporterChargeRateConfig.Value ? AdjustPlayerCount(chargeRate) : chargeRate;
+        public static int UnadjustTeleporterChargeRate(int adjustedChargeRate) =>
+            ShouldAffectTeleporterChargeRateConfig.Value ? UnadjustPlayerCount(adjustedChargeRate) : adjustedChargeRate;
+
+        // Fix final boss failing to trigger
+        [HarmonyPatch(typeof(AllPlayersTrigger), nameof(AllPlayersTrigger.FixedUpdate))]
+        // Fix final zone failing to trigger
+        [HarmonyPatch(typeof(MultiBodyTrigger), nameof(MultiBodyTrigger.FixedUpdate))]
+        [HarmonyTranspiler]
+        private static IEnumerable<CodeInstruction> GetTrueLivingPlayerCountTranspiler(IEnumerable<CodeInstruction> instructions)
         {
-            var c = new ILCursor(il);
-            if (c.TryGotoNext(MoveType.After,
-                i => i.MatchCallOrCallvirt<Run>("get_livingPlayerCount")))
-            {
-                c.EmitDelegate<Func<int, int>>(livingPlayerCount => livingPlayerCount / Multiplier);
-            }
-            else
-            {
-                Logger.LogError("Failed hooking AllPlayersTrigger.UpdateActivated. Aborting.");
-            }
+            var get_livingPlayerCount = typeof(Run).GetPropertyCached(nameof(Run.livingPlayerCount)).GetGetMethod();
+            CodeMatcher codeMatcher = new CodeMatcher();
+            codeMatcher.Instructions().AddRange(instructions.Select(c => new CodeInstruction(c)));
+            return codeMatcher.MatchEndForward(
+                new CodeMatch(OpCodes.Call, get_livingPlayerCount),
+                new CodeMatch(OpCodes.Callvirt, get_livingPlayerCount)
+            ).Repeat(matcher => matcher.Advance(1).InsertAndAdvance(
+                Transpilers.EmitDelegate<Func<int, int>>(adjustedPlayerCount => UnadjustPlayerCount(adjustedPlayerCount))
+            )).InstructionEnumeration();
         }
 
-        private void FixFinalZoneFailingToTrigger(ILContext il)
-        {
-            var c = new ILCursor(il);
-            if (c.TryGotoNext(MoveType.After,
-                i => i.MatchCallOrCallvirt<Run>("get_livingPlayerCount")))
-            {
-                c.EmitDelegate<Func<int, int>>(livingPlayerCount => livingPlayerCount / Multiplier);
-            }
-            else
-            {
-                Logger.LogError("Failed hooking MultiBodyTrigger.UpdateActivated. Aborting.");
-            }
-        }
-
-        private static int GetLivingPlayerCountHook(Run self) => origLivingPlayerCountGetter(self) * Multiplier;
-        private static int GetParticipatingPlayerCountHook(Run self) => origParticipatingPlayerCountGetter(self) * Multiplier;
- 
         // Random example command to set multiplier with
-        [ConCommand(commandName = "mod_wb_set_multiplier", flags = ConVarFlags.None, helpText = "Lets you pretend to have more friends than you actually do.")]
+        [ConCommand(commandName = "mod_wb_set_multiplier", flags = ConVarFlags.None,
+            helpText = "Lets you pretend to have more friends than you actually do.")]
         private static void CCSetMultiplier(ConCommandArgs args)
         {
             args.CheckArgumentCount(1);
@@ -131,7 +121,8 @@ namespace Multitudes
         }
  
         // Random example command to set multiplier with
-        [ConCommand(commandName = "mod_wb_get_multiplier", flags = ConVarFlags.None, helpText = "Lets you know what Multitudes' multiplier is set to.")]
+        [ConCommand(commandName = "mod_wb_get_multiplier", flags = ConVarFlags.None,
+            helpText = "Lets you know what Multitudes' multiplier is set to.")]
         private static void CCGetMultiplier(ConCommandArgs args)
         {
             Debug.Log(args.Count != 0
@@ -139,7 +130,8 @@ namespace Multitudes
                 : $"Your multiplier is currently {MultiplierConfig.Value}. Good luck!");
         }
 
-        [ConCommand(commandName = "mod_wb_set_teleporter_rate", flags = ConVarFlags.None, helpText = "Should Multitudes multiplier affect the speed at which the teleporter is charging at ?")]
+        [ConCommand(commandName = "mod_wb_set_teleporter_rate", flags = ConVarFlags.None,
+            helpText = "Should Multitudes multiplier affect the speed at which the teleporter is charging at ?")]
         private static void CCSetMultiplierAffectTeleporterChargeRate(ConCommandArgs args)
         {
             args.CheckArgumentCount(1);

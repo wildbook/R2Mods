@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using HarmonyLib;
 using MiniRpcLib.Action;
 using MiniRpcLib.Extensions;
 using MiniRpcLib.Func;
@@ -39,17 +40,13 @@ namespace MiniRpcLib
 
         private static readonly Random Random = new Random();
 
-        public static void Initialize(RpcLayer.RpcLayer layer)
+        public static void Initialize(Harmony harmony, RpcLayer.RpcLayer layer)
         {
             _layer = layer;
             _layer.ReceivedC2S += x => HandleRpc(Target.Server, x);
             _layer.ReceivedS2C += x => HandleRpc(Target.Client, x);
 
-            On.RoR2.Networking.NetworkMessageHandlerAttribute.CollectHandlers += orig =>
-            {
-                orig();
-                _layer.Initialize();
-            };
+            harmony.PatchAll(typeof(MiniRpc));
 
             Reflection.InvokeMethod(typeof(NetworkMessageHandlerAttribute), "CollectHandlers");
 
@@ -63,6 +60,10 @@ namespace MiniRpcLib
             _funcResponseC2S = instance.RegisterAction(Target.Client, HandleFunctionResponse);
             _funcRequestC2S = instance.RegisterAction(Target.Server, (nu, x) => HandleFunctionRequest(_funcResponseC2S, nu, x));
         }
+
+        [HarmonyPatch(typeof(RoR2.Networking.NetworkMessageHandlerAttribute), nameof(RoR2.Networking.NetworkMessageHandlerAttribute.CollectHandlers))]
+        [HarmonyPostfix]
+        private static void InitializeLayer() => _layer.Initialize();
 
         private static void HandleFunctionRequest(IRpcAction<Action<NetworkWriter>> response, NetworkUser nu, NetworkReader reader)
         {
