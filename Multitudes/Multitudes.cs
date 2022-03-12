@@ -21,6 +21,7 @@ namespace Multitudes
         internal Harmony harmony = new Harmony("dev.wildbook.multitudes");
 
         public static ConfigEntry<int> MultiplierConfig { get; set; }
+        public static ConfigEntry<int> DivisorConfig { get; set; }
         public static ConfigEntry<bool> ShouldAffectTeleporterChargeRateConfig { get; set; }
  
         public static int Multiplier
@@ -28,7 +29,11 @@ namespace Multitudes
             get => MultiplierConfig.Value;
             protected set => MultiplierConfig.Value = value;
         }
- 
+        public static int Divisor {
+            get => DivisorConfig.Value;
+            protected set => DivisorConfig.Value = value;
+        }
+
         public void Awake()
         {
             MultiplierConfig = Config.Bind(
@@ -37,15 +42,21 @@ namespace Multitudes
                 4,
                 "Sets the multiplier for Multitudes.");
 
+            DivisorConfig = Config.Bind(
+                "Game",
+                "Divisor",
+                1,
+                "Sets the divisor for Multitudes. Division occurs after multiplication. Avoid non-integer quotients.");
+
             ShouldAffectTeleporterChargeRateConfig = Config.Bind(
                 "Game",
                 "Should Affect Teleporter Charge Rate",
                 false,
-                "Sets if the Multitudes multiplier should affect the speed at which the teleporter is charging at.");
+                "Sets if the Multitudes adjustment should affect the speed at which the teleporter is charging at.");
  
             CommandHelper.AddToConsoleWhenReady();
  
-            Run.onRunStartGlobal += run => { SendMultiplierChat(); };
+            Run.onRunStartGlobal += run => { SendAdjustmentChat(); };
 
             harmony.PatchAll(typeof(Multitudes));
         }
@@ -55,8 +66,9 @@ namespace Multitudes
         [HarmonyPatch(typeof(Run), nameof(Run.livingPlayerCount), MethodType.Getter)]
         [HarmonyPatch(typeof(Run), nameof(Run.participatingPlayerCount), MethodType.Getter)]
         [HarmonyPostfix]
-        public static int AdjustPlayerCount(int playerCount) => playerCount * Multiplier;
-        public static int UnadjustPlayerCount(int adjustedPlayerCount) => adjustedPlayerCount / Multiplier;
+        public static int AdjustPlayerCount(int playerCount) => playerCount * Multiplier / Divisor;
+        // This isn't perfect, but it works and the user can not pick fractional adjustments.
+        public static int UnadjustPlayerCount(int adjustedPlayerCount) => adjustedPlayerCount * Divisor / Multiplier;
 
         [HarmonyPatch(typeof(HoldoutZoneController), nameof(HoldoutZoneController.CountPlayersInRadius))]
         [HarmonyPostfix]
@@ -83,7 +95,23 @@ namespace Multitudes
             )).InstructionEnumeration();
         }
 
-        // Random example command to set multiplier with
+        [ConCommand(commandName = "mod_wb_get_adjustment", flags = ConVarFlags.None,
+            helpText = "Lets you know what Multitudes' adjustment is.")]
+        private static void CCGetAdjustment(ConCommandArgs args) {
+            Debug.Log(args.Count != 0
+                ? "Invalid arguments. Did you mean `mod_wb_set_multiplier` or `mod_wb_set_divisor`?"
+                : $"Your adjustment is currently {MultiplierConfig.Value}/{DivisorConfig.Value}. Good luck!");
+        }
+
+        [ConCommand(commandName = "mod_wb_get_multiplier", flags = ConVarFlags.None,
+            helpText = "Lets you know what Multitudes' multiplier is set to.")]
+        private static void CCGetMultiplier(ConCommandArgs args)
+        {
+            Debug.Log(args.Count != 0
+                ? "Invalid arguments. Did you mean `mod_wb_set_multiplier`?"
+                : $"Your multiplier is currently {MultiplierConfig.Value}. Good luck!");
+        }
+
         [ConCommand(commandName = "mod_wb_set_multiplier", flags = ConVarFlags.None,
             helpText = "Lets you pretend to have more friends than you actually do.")]
         private static void CCSetMultiplier(ConCommandArgs args)
@@ -98,40 +126,62 @@ namespace Multitudes
             {
                 MultiplierConfig.Value = multiplier;
                 Debug.Log($"Multiplier set to {MultiplierConfig.Value}. Good luck!");
-                SendMultiplierChat();
+                SendAdjustmentChat();
             }
         }
- 
-        private static void SendMultiplierChat()
+
+        [ConCommand(commandName = "mod_wb_get_divisor", flags = ConVarFlags.None,
+            helpText = "Lets you know what Multitudes' divisor is set to.")]
+        private static void CCGetDivisor(ConCommandArgs args)
+        {
+            Debug.Log(args.Count != 0
+                ? "Invalid arguments. Did you mean `mod_wb_set_divisor`?"
+                : $"Your divisor is currently {DivisorConfig.Value}. Good luck!");
+        }
+
+        [ConCommand(commandName = "mod_wb_set_divisor", flags = ConVarFlags.None,
+            helpText = "Lets you pretend to have less friends than you actually do.")]
+        private static void CCSetDivisor(ConCommandArgs args)
+        {
+            args.CheckArgumentCount(1);
+
+            if (!int.TryParse(args[0], out var divisor))
+            {
+                Debug.Log("Invalid argument.");
+            }
+            else
+            {
+                DivisorConfig.Value = divisor;
+                Debug.Log($"Divisor set to {DivisorConfig.Value}. Good luck!");
+                SendAdjustmentChat();
+            }
+        }
+
+        private static void SendAdjustmentChat()
         {
             // If we're not host, we're not setting it for the current lobby
             // That also means no one cares what our Multitudes is set to
             if (!NetworkServer.active)
                 return;
- 
+
+            // If there's no active run, estimate with connected player controllers.
+            int playerCount = Run.instance != null ? Run.instance.participatingPlayerCount
+                : AdjustPlayerCount(NetworkServer.connections.SelectMany(conn => conn.playerControllers).Count());
             Chat.SendBroadcastChat(
                 new Chat.SimpleChatMessage
                 {
-                    baseToken = "Multitudes set to: {0}",
+                    baseToken = "Multitudes adjustment set to: {0}/{1} (current adjusted player count: {2})",
                     paramTokens = new[]
                     {
-                        MultiplierConfig.Value.ToString()
+                        MultiplierConfig.Value.ToString(),
+                        DivisorConfig.Value.ToString(),
+                        playerCount.ToString(),
                     }
                 });
         }
- 
-        // Random example command to set multiplier with
-        [ConCommand(commandName = "mod_wb_get_multiplier", flags = ConVarFlags.None,
-            helpText = "Lets you know what Multitudes' multiplier is set to.")]
-        private static void CCGetMultiplier(ConCommandArgs args)
-        {
-            Debug.Log(args.Count != 0
-                ? "Invalid arguments. Did you mean mod_wb_set_multiplier?"
-                : $"Your multiplier is currently {MultiplierConfig.Value}. Good luck!");
-        }
 
         [ConCommand(commandName = "mod_wb_set_teleporter_rate", flags = ConVarFlags.None,
-            helpText = "Should Multitudes multiplier affect the speed at which the teleporter is charging at ?")]
+            helpText = "Should the Multitudes adjustment affect the speed at which the teleporter is charging at?")]
         private static void CCSetMultiplierAffectTeleporterChargeRate(ConCommandArgs args)
         {
             args.CheckArgumentCount(1);
@@ -143,7 +193,7 @@ namespace Multitudes
             }
             else
             {
-                Debug.Log("Invalid argument. Correct usage is either : mod_wb_set_teleporter_rate true / mod_wb_set_teleporter_rate false");
+                Debug.Log("Invalid argument. Correct usage is: `mod_wb_set_teleporter_rate true` / `mod_wb_set_teleporter_rate false`");
             }
         }
     }
