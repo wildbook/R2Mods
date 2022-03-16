@@ -11,7 +11,7 @@ using UnityEngine.Networking;
 namespace Multitudes
 {
     [BepInDependency("com.bepis.r2api")]
-    [BepInPlugin("dev.wildbook.multitudes", "Multitudes", "1.5.3")]
+    [BepInPlugin("dev.wildbook.multitudes", "Multitudes", "1.5.6")]
     [R2APISubmoduleDependency(nameof(CommandHelper))]
     [NetworkCompatibility(CompatibilityLevel.NoNeedForSync)]
     public class Multitudes : BaseUnityPlugin
